@@ -206,7 +206,7 @@ module.exports = grammar({
       seq(
         optional($.modifiers),
         choice("class", "interface"),
-        alias($.simple_identifier, $.type_identifier),
+        alias($.simple_identifier, $.identifier),
         optional($.type_parameters),
         optional($.primary_constructor),
         optional(seq(":", $._delegation_specifiers)),
@@ -216,7 +216,7 @@ module.exports = grammar({
       seq(
         optional($.modifiers),
         "enum", "class",
-        alias($.simple_identifier, $.type_identifier),
+        alias($.simple_identifier, $.identifier),
         optional($.type_parameters),
         optional($.primary_constructor),
         optional(seq(":", $._delegation_specifiers)),
@@ -344,7 +344,7 @@ module.exports = grammar({
       "fun",
       optional($.type_parameters),
       optional(seq($._receiver_type, optional('.'))),
-      $.simple_identifier,
+      field('identifier', $.simple_identifier),
       $.function_value_parameters_,
       optional_with_placeholder("type_optional", 
         seq(":", alias($._type, $.type))
@@ -530,7 +530,7 @@ module.exports = grammar({
       optional($._semis),
     ),
 
-    statement_: $ => choice(
+    statement_: $ => field('statement', choice(
       $.declaration_,
       seq(
         repeat(choice($.label, $.annotation)),
@@ -540,7 +540,7 @@ module.exports = grammar({
           $.expression_
         )
       )
-    ),
+    )),
 
     label: $ => token(seq(
       /[a-zA-Z_][a-zA-Z_0-9]*/,
@@ -549,7 +549,11 @@ module.exports = grammar({
 
     control_structure_body: $ => choice($.enclosed_body, alias($.statement_, $.statement)),
 
-    enclosed_body: $ => prec(PREC.BLOCK, seq("{", optional($.statements), "}")),
+    enclosed_body: $ => prec(PREC.BLOCK, seq(
+      "{", 
+      optional_with_placeholder('statement_list', $.statements),
+      "}"
+    )),
 
     loop_statement_: $ => choice(
       $.for,
@@ -715,7 +719,7 @@ module.exports = grammar({
 
     value_argument: $ => seq(
       optional($.annotation),
-      optional(seq($.simple_identifier, "=")),
+      optional(seq(field('identifier', $.simple_identifier), "=")),
       optional("*"),
       $.expression_
     ),

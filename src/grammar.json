@@ -371,7 +371,7 @@
                   "name": "simple_identifier"
                 },
                 "named": true,
-                "value": "type_identifier"
+                "value": "identifier"
               },
               {
                 "type": "CHOICE",
@@ -474,7 +474,7 @@
                   "name": "simple_identifier"
                 },
                 "named": true,
-                "value": "type_identifier"
+                "value": "identifier"
               },
               {
                 "type": "CHOICE",
@@ -1357,8 +1357,12 @@
             ]
           },
           {
-            "type": "SYMBOL",
-            "name": "simple_identifier"
+            "type": "FIELD",
+            "name": "identifier",
+            "content": {
+              "type": "SYMBOL",
+              "name": "simple_identifier"
+            }
           },
           {
             "type": "SYMBOL",
@@ -2559,51 +2563,55 @@
       ]
     },
     "statement_": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "declaration_"
-        },
-        {
-          "type": "SEQ",
-          "members": [
-            {
-              "type": "REPEAT",
-              "content": {
+      "type": "FIELD",
+      "name": "statement",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "declaration_"
+          },
+          {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "REPEAT",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "label"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "annotation"
+                    }
+                  ]
+                }
+              },
+              {
                 "type": "CHOICE",
                 "members": [
                   {
                     "type": "SYMBOL",
-                    "name": "label"
+                    "name": "assignment"
                   },
                   {
                     "type": "SYMBOL",
-                    "name": "annotation"
+                    "name": "loop_statement_"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "expression_"
                   }
                 ]
               }
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "assignment"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "loop_statement_"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "expression_"
-                }
-              ]
-            }
-          ]
-        }
-      ]
+            ]
+          }
+        ]
+      }
     },
     "label": {
       "type": "TOKEN",
@@ -2653,11 +2661,19 @@
             "type": "CHOICE",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "statements"
+                "type": "FIELD",
+                "name": "statement_list",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "statements"
+                }
               },
               {
-                "type": "BLANK"
+                "type": "FIELD",
+                "name": "statement_list",
+                "content": {
+                  "type": "BLANK"
+                }
               }
             ]
           },
@@ -3663,8 +3679,12 @@
               "type": "SEQ",
               "members": [
                 {
-                  "type": "SYMBOL",
-                  "name": "simple_identifier"
+                  "type": "FIELD",
+                  "name": "identifier",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "simple_identifier"
+                  }
                 },
                 {
                   "type": "STRING",
