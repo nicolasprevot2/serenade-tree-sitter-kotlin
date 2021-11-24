@@ -2629,8 +2629,13 @@
           "name": "_block"
         },
         {
-          "type": "SYMBOL",
-          "name": "statement_"
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "statement_"
+          },
+          "named": true,
+          "value": "statement"
         }
       ]
     },
@@ -2668,11 +2673,11 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "for_statement"
+          "name": "for"
         },
         {
           "type": "SYMBOL",
-          "name": "while_statement"
+          "name": "while"
         },
         {
           "type": "SYMBOL",
@@ -2680,7 +2685,11 @@
         }
       ]
     },
-    "for_statement": {
+    "for": {
+      "type": "SYMBOL",
+      "name": "for_each_clause"
+    },
+    "for_each_clause": {
       "type": "PREC_RIGHT",
       "value": 0,
       "content": {
@@ -2695,32 +2704,49 @@
             "value": "("
           },
           {
-            "type": "REPEAT",
+            "type": "FIELD",
+            "name": "block_iterator",
             "content": {
-              "type": "SYMBOL",
-              "name": "annotation"
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "REPEAT",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "annotation"
+                  }
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "variable_declaration"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "multi_variable_declaration"
+                    }
+                  ]
+                }
+              ]
             }
           },
           {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "variable_declaration"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "multi_variable_declaration"
-              }
-            ]
+            "type": "FIELD",
+            "name": "for_each_separator",
+            "content": {
+              "type": "STRING",
+              "value": "in"
+            }
           },
           {
-            "type": "STRING",
-            "value": "in"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "expression_"
+            "type": "FIELD",
+            "name": "block_collection",
+            "content": {
+              "type": "SYMBOL",
+              "name": "expression_"
+            }
           },
           {
             "type": "STRING",
@@ -2741,7 +2767,11 @@
         ]
       }
     },
-    "while_statement": {
+    "while": {
+      "type": "SYMBOL",
+      "name": "while_clause"
+    },
+    "while_clause": {
       "type": "SEQ",
       "members": [
         {
@@ -2753,8 +2783,13 @@
           "value": "("
         },
         {
-          "type": "SYMBOL",
-          "name": "expression_"
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "expression_"
+          },
+          "named": true,
+          "value": "condition"
         },
         {
           "type": "STRING",

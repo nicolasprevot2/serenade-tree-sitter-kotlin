@@ -547,31 +547,37 @@ module.exports = grammar({
       "@"
     )),
 
-    control_structure_body: $ => choice($._block, $.statement_),
+    control_structure_body: $ => choice($._block, alias($.statement_, $.statement)),
 
     _block: $ => prec(PREC.BLOCK, seq("{", optional($.statements), "}")),
 
     loop_statement_: $ => choice(
-      $.for_statement,
-      $.while_statement,
+      $.for,
+      $.while,
       $.do_while_statement
     ),
 
-    for_statement: $ => prec.right(seq(
+    for: $ => $.for_each_clause, 
+
+    for_each_clause: $ => prec.right(seq(
       "for",
       "(",
-      repeat($.annotation),
-      choice($.variable_declaration, $.multi_variable_declaration),
-      "in",
-      $.expression_,
+      field("block_iterator", seq(
+        repeat($.annotation),
+        choice($.variable_declaration, $.multi_variable_declaration),
+      )),
+      field("for_each_separator", "in"),
+      field("block_collection", $.expression_),
       ")",
       optional($.control_structure_body)
     )),
 
-    while_statement: $ => seq(
+    while: $ => $.while_clause, 
+
+    while_clause: $ => seq(
       "while",
       "(",
-      $.expression_,
+      alias($.expression_, $.condition),
       ")",
       choice(";", $.control_structure_body)
     ),
