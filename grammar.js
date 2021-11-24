@@ -115,6 +115,8 @@ module.exports = grammar({
     [$.if], 
     [$.if_clause, $.else_if_clause],
     [$.return],
+    [$.variable_declaration], 
+    [$.property_assignment]
   ],
 
   externals: $ => [
@@ -127,12 +129,6 @@ module.exports = grammar({
   ],
 
   word: $ => $._alpha_identifier,
-
-  // inline: $ => [
-  //   $.primary_expression_,
-  //   $._unary_expression,
-  //   // $._binary_expression
-  // ],
 
   rules: {
     // ====================
@@ -366,23 +362,37 @@ module.exports = grammar({
 
     function_body: $ => choice($.enclosed_body, seq("=", $.expression_)),
 
-    variable_declaration: $ => prec.left(PREC.VAR_DECL, seq(
+    single_variable_declaration: $ => prec.left(PREC.VAR_DECL, seq(
       // repeat($.annotation), TODO
-      $.simple_identifier,
-      optional(seq(":", $._type))
+      field('identifier', $.simple_identifier),
+      optional_with_placeholder("type_optional", seq(":", alias($._type, $.type)))
     )),
+
+    variable_declaration: $ => alias($.property_assignment, $.assignment),
+
+    property_assignment: $ => seq(
+      choice(
+        alias($.single_variable_declaration, $.assignment_variable), 
+        $.multi_variable_declaration
+      ), 
+      optional($.type_constraints),
+      optional_with_placeholder(
+        "assignment_value_list_optional", 
+        alias($.property_assignment_value, $.assignment_value)
+      )
+    ),
+
+    property_assignment_value: $ => choice(
+      seq("=", $.expression_),
+      $.property_delegate
+    ),
 
     property_declaration: $ => prec.right(seq(
       optional($.modifiers),
       choice("val", "var"),
       optional($.type_parameters),
       optional(seq($._receiver_type, optional('.'))),
-      choice($.variable_declaration, $.multi_variable_declaration),
-      optional($.type_constraints),
-      optional(choice(
-        seq("=", $.expression_),
-        $.property_delegate
-      )),
+      $.variable_declaration,
       optional(';'),
       choice(
         // TODO: Getter-setter combinations
@@ -584,7 +594,7 @@ module.exports = grammar({
       "(",
       field("block_iterator", seq(
         repeat($.annotation),
-        choice($.variable_declaration, $.multi_variable_declaration),
+        choice($.single_variable_declaration, $.multi_variable_declaration),
       )),
       field("for_each_separator", "in"),
       field("block_collection", $.expression_),
@@ -618,10 +628,12 @@ module.exports = grammar({
     _semis: $ => choice($._automatic_semicolon, ';'),
 
     assignment: $ => choice(
-      prec.left(PREC.ASSIGNMENT, seq($.directly_assignable_expression, $._assignment_and_operator, $.expression_)),
-      prec.left(PREC.ASSIGNMENT, seq($.directly_assignable_expression, "=", $.expression_)),
+      prec.left(PREC.ASSIGNMENT, seq($.directly_assignable_expression, $._assignment_and_operator, $.assignment_value)),
+      prec.left(PREC.ASSIGNMENT, seq($.directly_assignable_expression, "=", $.assignment_value)),
       // TODO
     ),
+
+    assignment_value: $ => $.expression_,
 
     // ==========
     // Expressions
@@ -812,14 +824,14 @@ module.exports = grammar({
 
     multi_variable_declaration: $ => seq(
       '(',
-      sep1($.variable_declaration, ','),
+      field('assignment_variable_list', sep1(alias($.single_variable_declaration, $.assignment_variable), ',')),
       ')'
     ),
 
     lambda_parameters: $ => sep1($._lambda_parameter, ","),
 
     _lambda_parameter: $ => choice(
-      $.variable_declaration, 
+      $.single_variable_declaration, 
       $.multi_variable_declaration
     ),
 
@@ -888,7 +900,7 @@ module.exports = grammar({
       optional(seq(
         repeat($.annotation),
         "val",
-        $.variable_declaration,
+        $.single_variable_declaration,
         "="
       )),
       $.expression_,
@@ -1013,11 +1025,12 @@ module.exports = grammar({
 
     directly_assignable_expression: $ => prec(
       PREC.ASSIGNMENT,
+      field('assignment_variable',
       choice(
         $._postfix_unary_expression,
         $.simple_identifier
         // TODO
-      )
+      ))
     ),
 
     // ==========
