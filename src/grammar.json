@@ -1012,19 +1012,23 @@
       ]
     },
     "class_member_declarations_": {
-      "type": "REPEAT1",
+      "type": "FIELD",
+      "name": "member",
       "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "_class_member_declaration"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "_semis"
-          }
-        ]
+        "type": "REPEAT1",
+        "content": {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_class_member_declaration"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_semis"
+            }
+          ]
+        }
       }
     },
     "_class_member_declaration": {
@@ -1907,16 +1911,34 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "simple_identifier"
+          "type": "FIELD",
+          "name": "identifier",
+          "content": {
+            "type": "SYMBOL",
+            "name": "simple_identifier"
+          }
         },
         {
-          "type": "STRING",
-          "value": ":"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_type"
+          "type": "FIELD",
+          "name": "type_optional",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "STRING",
+                "value": ":"
+              },
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_type"
+                },
+                "named": true,
+                "value": "type"
+              }
+            ]
+          }
         }
       ]
     },
@@ -2974,15 +2996,15 @@
       "members": [
         {
           "type": "SYMBOL",
+          "name": "primary_expression_"
+        },
+        {
+          "type": "SYMBOL",
           "name": "_unary_expression"
         },
         {
           "type": "SYMBOL",
           "name": "_binary_expression"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "primary_expression_"
         }
       ]
     },
@@ -2995,7 +3017,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "call_expression"
+          "name": "call"
         },
         {
           "type": "SYMBOL",
@@ -3036,7 +3058,7 @@
         ]
       }
     },
-    "call_expression": {
+    "call": {
       "type": "PREC_LEFT",
       "value": 16,
       "content": {
@@ -4790,51 +4812,16 @@
           "type": "PREC_RIGHT",
           "value": 0,
           "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "STRING",
-                "value": "throw"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "expression_"
-              }
-            ]
+            "type": "SYMBOL",
+            "name": "throw"
           }
         },
         {
           "type": "PREC_RIGHT",
           "value": 0,
           "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": "return"
-                  },
-                  {
-                    "type": "SYMBOL",
-                    "name": "_return_at"
-                  }
-                ]
-              },
-              {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "expression_"
-                  },
-                  {
-                    "type": "BLANK"
-                  }
-                ]
-              }
-            ]
+            "type": "SYMBOL",
+            "name": "return"
           }
         },
         {
@@ -4852,6 +4839,62 @@
         {
           "type": "SYMBOL",
           "name": "_break_at"
+        }
+      ]
+    },
+    "throw": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "throw"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "expression_"
+        }
+      ]
+    },
+    "return": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": "return"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_return_at"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "return_value_optional",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "expression_"
+                },
+                "named": true,
+                "value": "return_value"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "return_value_optional",
+              "content": {
+                "type": "BLANK"
+              }
+            }
+          ]
         }
       ]
     },
@@ -6395,37 +6438,37 @@
       "expression_"
     ],
     [
-      "call_expression",
+      "call",
       "prefix_expression",
       "comparison_expression"
     ],
     [
-      "call_expression",
+      "call",
       "range_expression",
       "comparison_expression"
     ],
     [
-      "call_expression",
+      "call",
       "elvis_expression",
       "comparison_expression"
     ],
     [
-      "call_expression",
+      "call",
       "check_expression",
       "comparison_expression"
     ],
     [
-      "call_expression",
+      "call",
       "additive_expression",
       "comparison_expression"
     ],
     [
-      "call_expression",
+      "call",
       "infix_expression",
       "comparison_expression"
     ],
     [
-      "call_expression",
+      "call",
       "multiplicative_expression",
       "comparison_expression"
     ],
@@ -6479,6 +6522,9 @@
     [
       "if_clause",
       "else_if_clause"
+    ],
+    [
+      "return"
     ]
   ],
   "precedences": [],

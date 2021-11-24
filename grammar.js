@@ -84,13 +84,13 @@ module.exports = grammar({
     [$._postfix_unary_expression, $.expression_],
 
     // ambiguity between generics and comparison operations (foo < b > c)
-    [$.call_expression, $.prefix_expression, $.comparison_expression],
-    [$.call_expression, $.range_expression, $.comparison_expression],
-    [$.call_expression, $.elvis_expression, $.comparison_expression],
-    [$.call_expression, $.check_expression, $.comparison_expression],
-    [$.call_expression, $.additive_expression, $.comparison_expression],
-    [$.call_expression, $.infix_expression, $.comparison_expression],
-    [$.call_expression, $.multiplicative_expression, $.comparison_expression],
+    [$.call, $.prefix_expression, $.comparison_expression],
+    [$.call, $.range_expression, $.comparison_expression],
+    [$.call, $.elvis_expression, $.comparison_expression],
+    [$.call, $.check_expression, $.comparison_expression],
+    [$.call, $.additive_expression, $.comparison_expression],
+    [$.call, $.infix_expression, $.comparison_expression],
+    [$.call, $.multiplicative_expression, $.comparison_expression],
     [$.type_arguments, $._comparison_operator],
 
     // ambiguity between prefix expressions and annotations before functions
@@ -114,6 +114,7 @@ module.exports = grammar({
     // serenade if style inherently has conflicts
     [$.if], 
     [$.if_clause, $.else_if_clause],
+    [$.return],
   ],
 
   externals: $ => [
@@ -126,6 +127,12 @@ module.exports = grammar({
   ],
 
   word: $ => $._alpha_identifier,
+
+  // inline: $ => [
+  //   $.primary_expression_,
+  //   $._unary_expression,
+  //   // $._binary_expression
+  // ],
 
   rules: {
     // ====================
@@ -299,7 +306,7 @@ module.exports = grammar({
     // Class members
     // ==========
 
-    class_member_declarations_: $ => repeat1(seq($._class_member_declaration, $._semis)),
+    class_member_declarations_: $ => field('member', repeat1(seq($._class_member_declaration, $._semis))),
 
     _class_member_declaration: $ => choice(
       $.declaration_,
@@ -416,7 +423,10 @@ module.exports = grammar({
       optional(seq(":", $._type))
     ),
 
-    parameter_: $ => seq($.simple_identifier, ":", $._type),
+    parameter_: $ => seq(
+      field('identifier', $.simple_identifier), 
+      field('type_optional', seq(":", alias($._type, $.type)))
+    ),
 
     object_declaration: $ => prec.right(seq(
       optional($.modifiers),
@@ -618,16 +628,16 @@ module.exports = grammar({
     // ==========
 
     expression_: $ => choice(
+      $.primary_expression_,
       $._unary_expression,
-      $._binary_expression,
-      $.primary_expression_
+      $._binary_expression
     ),
 
     // Unary expressions
 
     _unary_expression: $ => choice(
       $.postfix_expression,
-      $.call_expression,
+      $.call,
       $.indexing_expression,
       $.navigation_expression,
       $.prefix_expression,
@@ -637,7 +647,7 @@ module.exports = grammar({
 
     postfix_expression: $ => prec.left(PREC.POSTFIX, seq($.expression_, $._postfix_unary_operator)),
 
-    call_expression: $ => prec.left(PREC.POSTFIX, seq($.expression_, $.call_suffix)),
+    call: $ => prec.left(PREC.POSTFIX, seq($.expression_, $.call_suffix)),
 
     indexing_expression: $ => prec.left(PREC.POSTFIX, seq($.expression_, $.indexing_suffix)),
 
@@ -938,12 +948,17 @@ module.exports = grammar({
     finally_clause: $ => seq("finally", $.enclosed_body),
 
     jump_expression: $ => choice(
-      prec.right(PREC.RETURN_OR_THROW, seq("throw", $.expression_)),
-      prec.right(PREC.RETURN_OR_THROW, seq(choice("return", $._return_at), optional($.expression_))),
+      prec.right(PREC.RETURN_OR_THROW, $.throw),
+      prec.right(PREC.RETURN_OR_THROW, $.return),
       "continue",
       $._continue_at,
       "break",
       $._break_at
+    ),
+
+    throw: $ =>  seq("throw", $.expression_),
+    return: $ => seq(choice("return", $._return_at), 
+      optional_with_placeholder("return_value_optional", alias($.expression_, $.return_value))
     ),
 
     callable_reference: $ => seq(
