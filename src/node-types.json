@@ -89,10 +89,33 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "statements",
+          "type": "enclosed_body",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "argument",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "annotation",
+          "named": true
+        },
+        {
+          "type": "expression_",
+          "named": true
+        },
+        {
+          "type": "simple_identifier",
           "named": true
         }
       ]
@@ -231,6 +254,10 @@
           "named": true
         },
         {
+          "type": "enclosed_body",
+          "named": true
+        },
+        {
           "type": "function_type",
           "named": true
         },
@@ -244,10 +271,6 @@
         },
         {
           "type": "simple_identifier",
-          "named": true
-        },
-        {
-          "type": "statements",
           "named": true
         },
         {
@@ -614,14 +637,14 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "statement",
+          "type": "enclosed_body",
           "named": true
         },
         {
-          "type": "statements",
+          "type": "statement",
           "named": true
         }
       ]
@@ -805,6 +828,21 @@
       "types": [
         {
           "type": "expression_",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "enclosed_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "statements",
           "named": true
         }
       ]
@@ -1014,10 +1052,10 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "statements",
+          "type": "enclosed_body",
           "named": true
         }
       ]
@@ -1164,14 +1202,14 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "expression_",
+          "type": "enclosed_body",
           "named": true
         },
         {
-          "type": "statements",
+          "type": "expression_",
           "named": true
         }
       ]
@@ -2429,15 +2467,15 @@
           "named": true
         },
         {
+          "type": "enclosed_body",
+          "named": true
+        },
+        {
           "type": "function_value_parameters_",
           "named": true
         },
         {
           "type": "modifiers",
-          "named": true
-        },
-        {
-          "type": "statements",
           "named": true
         }
       ]
@@ -2652,10 +2690,10 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "statements",
+          "type": "enclosed_body",
           "named": true
         }
       ]
@@ -3026,41 +3064,23 @@
     }
   },
   {
-    "type": "value_argument",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "annotation",
-          "named": true
-        },
-        {
-          "type": "expression_",
-          "named": true
-        },
-        {
-          "type": "simple_identifier",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "value_arguments",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "value_argument",
-          "named": true
-        }
-      ]
+    "fields": {
+      "argument_list": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "argument",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {

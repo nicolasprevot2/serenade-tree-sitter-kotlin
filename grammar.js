@@ -304,7 +304,7 @@ module.exports = grammar({
       $.secondary_constructor
     ),
 
-    anonymous_initializer: $ => seq("init", $._block),
+    anonymous_initializer: $ => seq("init", $.enclosed_body),
 
     companion_object: $ => seq(
       optional($.modifiers),
@@ -353,7 +353,7 @@ module.exports = grammar({
       optional($.function_body)
     )),
 
-    function_body: $ => choice($._block, seq("=", $.expression_)),
+    function_body: $ => choice($.enclosed_body, seq("=", $.expression_)),
 
     variable_declaration: $ => prec.left(PREC.VAR_DECL, seq(
       // repeat($.annotation), TODO
@@ -427,7 +427,7 @@ module.exports = grammar({
       "constructor",
       $.function_value_parameters_,
       optional(seq(":", $.constructor_delegation_call)),
-      optional($._block)
+      optional($.enclosed_body)
     ),
 
     constructor_delegation_call: $ => seq(choice("this", "super"), $.value_arguments),
@@ -547,9 +547,9 @@ module.exports = grammar({
       "@"
     )),
 
-    control_structure_body: $ => choice($._block, alias($.statement_, $.statement)),
+    control_structure_body: $ => choice($.enclosed_body, alias($.statement_, $.statement)),
 
-    _block: $ => prec(PREC.BLOCK, seq("{", optional($.statements), "}")),
+    enclosed_body: $ => prec(PREC.BLOCK, seq("{", optional($.statements), "}")),
 
     loop_statement_: $ => choice(
       $.for,
@@ -708,7 +708,10 @@ module.exports = grammar({
 
     type_arguments: $ => seq("<", sep1($.type_projection, ","), ">"),
 
-    value_arguments: $ => seq("(", optional(sep1($.value_argument, ",")), ")"),
+    value_arguments: $ => seq("(", 
+      optional_with_placeholder("argument_list", sep1(alias($.value_argument, $.argument), ",")),
+      ")"
+    ),
 
     value_argument: $ => seq(
       optional($.annotation),
@@ -908,7 +911,7 @@ module.exports = grammar({
 
     try_clause: $ => seq(
       "try",
-      $._block,
+      $.enclosed_body,
     ),
 
     catch: $ => seq(
@@ -919,10 +922,10 @@ module.exports = grammar({
       ":",
       $._type,
       ")",
-      $._block,
+      $.enclosed_body,
     ),
 
-    finally_clause: $ => seq("finally", $._block),
+    finally_clause: $ => seq("finally", $.enclosed_body),
 
     jump_expression: $ => choice(
       prec.right(PREC.RETURN_OR_THROW, seq("throw", $.expression_)),
