@@ -3730,7 +3730,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "try_expression"
+          "name": "try"
         },
         {
           "type": "SYMBOL",
@@ -4598,7 +4598,59 @@
         }
       ]
     },
-    "try_expression": {
+    "try": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "try_clause"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "catch_list",
+              "content": {
+                "type": "REPEAT1",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "catch"
+                }
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "catch_list",
+              "content": {
+                "type": "BLANK"
+              }
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "finally_clause_optional",
+              "content": {
+                "type": "SYMBOL",
+                "name": "finally_clause"
+              }
+            },
+            {
+              "type": "FIELD",
+              "name": "finally_clause_optional",
+              "content": {
+                "type": "BLANK"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "try_clause": {
       "type": "SEQ",
       "members": [
         {
@@ -4608,43 +4660,10 @@
         {
           "type": "SYMBOL",
           "name": "_block"
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "REPEAT1",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "catch_block"
-                  }
-                },
-                {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "finally_block"
-                    },
-                    {
-                      "type": "BLANK"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "type": "SYMBOL",
-              "name": "finally_block"
-            }
-          ]
         }
       ]
     },
-    "catch_block": {
+    "catch": {
       "type": "SEQ",
       "members": [
         {
@@ -4684,7 +4703,7 @@
         }
       ]
     },
-    "finally_block": {
+    "finally_clause": {
       "type": "SEQ",
       "members": [
         {

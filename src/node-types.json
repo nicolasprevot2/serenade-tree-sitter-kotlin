@@ -219,7 +219,7 @@
     }
   },
   {
-    "type": "catch_block",
+    "type": "catch",
     "named": true,
     "fields": {},
     "children": {
@@ -1009,7 +1009,7 @@
     }
   },
   {
-    "type": "finally_block",
+    "type": "finally_clause",
     "named": true,
     "fields": {},
     "children": {
@@ -2250,7 +2250,7 @@
           "named": true
         },
         {
-          "type": "try_expression",
+          "type": "try",
           "named": true
         },
         {
@@ -2611,21 +2611,49 @@
     "fields": {}
   },
   {
-    "type": "try_expression",
+    "type": "try",
     "named": true,
-    "fields": {},
+    "fields": {
+      "catch_list": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "catch",
+            "named": true
+          }
+        ]
+      },
+      "finally_clause_optional": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "finally_clause",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": true,
       "types": [
         {
-          "type": "catch_block",
+          "type": "try_clause",
           "named": true
-        },
-        {
-          "type": "finally_block",
-          "named": true
-        },
+        }
+      ]
+    }
+  },
+  {
+    "type": "try_clause",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
         {
           "type": "statements",
           "named": true

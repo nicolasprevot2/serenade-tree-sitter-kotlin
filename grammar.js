@@ -730,7 +730,7 @@ module.exports = grammar({
       $.super_expression,
       $.if,
       $.when_expression,
-      $.try_expression,
+      $.try,
       $.jump_expression
     ),
 
@@ -900,16 +900,18 @@ module.exports = grammar({
 
     type_test: $ => seq($._is_operator, $._type),
 
-    try_expression: $ => seq(
-      "try",
-      $._block,
-      choice(
-        seq(repeat1($.catch_block), optional($.finally_block)),
-        $.finally_block
-      )
+    try: $ => seq(
+      $.try_clause, 
+      optional_with_placeholder("catch_list", repeat1($.catch)),
+      optional_with_placeholder("finally_clause_optional", $.finally_clause)
     ),
 
-    catch_block: $ => seq(
+    try_clause: $ => seq(
+      "try",
+      $._block,
+    ),
+
+    catch: $ => seq(
       "catch",
       "(",
       repeat($.annotation),
@@ -920,7 +922,7 @@ module.exports = grammar({
       $._block,
     ),
 
-    finally_block: $ => seq("finally", $._block),
+    finally_clause: $ => seq("finally", $._block),
 
     jump_expression: $ => choice(
       prec.right(PREC.RETURN_OR_THROW, seq("throw", $.expression_)),
