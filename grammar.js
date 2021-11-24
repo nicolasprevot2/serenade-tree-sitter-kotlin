@@ -110,6 +110,10 @@ module.exports = grammar({
     // ambiguity between simple identifier 'set/get' with actual setter/getter functions.
     [$.setter, $.simple_identifier],
     [$.getter, $.simple_identifier],
+
+    // serenade if style inherently has conflicts
+    [$.if], 
+    [$.if_clause, $.else_if_clause],
   ],
 
   externals: $ => [
@@ -342,7 +346,9 @@ module.exports = grammar({
       optional(seq($._receiver_type, optional('.'))),
       $.simple_identifier,
       $.function_value_parameters_,
-      optional(seq(":", $._type)),
+      optional_with_placeholder("type_optional", 
+        seq(":", alias($._type, $.type))
+      ),
       optional($.type_constraints),
       optional($.function_body)
     )),
@@ -716,7 +722,7 @@ module.exports = grammar({
       $.collection_literal,
       $.this_expression,
       $.super_expression,
-      $.if_expression,
+      $.if,
       $.when_expression,
       $.try_expression,
       $.jump_expression
@@ -814,20 +820,39 @@ module.exports = grammar({
       // TODO optional(seq("@", $.simple_identifier))
     ),
 
-    if_expression: $ => prec.right(seq(
-      "if",
-      "(", $.expression_, ")",
+    if: $ => seq(
+      $.if_clause, 
+      optional_with_placeholder("else_if_clause_list", repeat($.else_if_clause)),
+      optional_with_placeholder("else_clause_optional", $.else_clause)
+    ),
+
+    if_clause: $ => seq(
+      "if", 
+      "(", 
+      field("condition", $.expression_), 
+      ")", 
       choice(
         $.control_structure_body,
         ";",
-        seq(
-          optional($.control_structure_body),
-          optional(";"),
-          "else",
-          choice($.control_structure_body, ";")
-        )
+      )
+    ),
+
+    else_if_clause: $ => prec.dynamic(1, seq(
+      "else", 
+      "if", 
+      "(", 
+      field("condition", $.expression_), 
+      ")", 
+      choice(
+        $.control_structure_body,
+        ";",
       )
     )),
+
+    else_clause: $ => seq(
+      "else",
+      choice($.control_structure_body, ";")
+    ),
 
     when_subject: $ => seq(
       "(",
