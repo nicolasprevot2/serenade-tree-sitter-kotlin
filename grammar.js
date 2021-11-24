@@ -188,9 +188,9 @@ module.exports = grammar({
       $.class_declaration,
       $.object_declaration,
       $.function,
-      $.property_declaration,
+      $.property,
       // TODO: it would be better to have getter/setter only in
-      // property_declaration but it's difficult to get ASI
+      // property but it's difficult to get ASI
       // (Automatic Semicolon Insertion) working in the lexer for
       // getter/setter. Indeed, they can also have modifiers in
       // front, which means it's not enough to lookahead for 'get' or 'set' in
@@ -302,7 +302,7 @@ module.exports = grammar({
     // Class members
     // ==========
 
-    class_member_declarations_: $ => field('member', repeat1(seq($._class_member_declaration, $._semis))),
+    class_member_declarations_: $ => repeat1(seq(alias($._class_member_declaration, $.member), $._semis)),
 
     _class_member_declaration: $ => choice(
       $.declaration_,
@@ -387,7 +387,7 @@ module.exports = grammar({
       $.property_delegate
     ),
 
-    property_declaration: $ => prec.right(seq(
+    property: $ => prec.right(seq(
       optional($.modifiers),
       choice("val", "var"),
       optional($.type_parameters),
@@ -756,7 +756,7 @@ module.exports = grammar({
       $.parenthesized_expression,
       $.simple_identifier,
       $._literal_constant,
-      $._string_literal,
+      $.string_literal,
       $.callable_reference,
       $._function_literal,
       $.object_literal,
@@ -785,7 +785,7 @@ module.exports = grammar({
       $.unsigned_literal
     ),
 
-    _string_literal: $ => choice(
+    string_literal: $ => choice(
       $.line_string_literal,
       $.multi_line_string_literal
     ),

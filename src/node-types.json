@@ -476,33 +476,16 @@
   {
     "type": "class_member_declarations_",
     "named": true,
-    "fields": {
-      "member": {
-        "multiple": true,
-        "required": true,
-        "types": [
-          {
-            "type": ";",
-            "named": false
-          },
-          {
-            "type": "anonymous_initializer",
-            "named": true
-          },
-          {
-            "type": "companion_object",
-            "named": true
-          },
-          {
-            "type": "declaration_",
-            "named": true
-          },
-          {
-            "type": "secondary_constructor",
-            "named": true
-          }
-        ]
-      }
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "member",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -786,7 +769,7 @@
           "named": true
         },
         {
-          "type": "property_declaration",
+          "type": "property",
           "named": true
         },
         {
@@ -1922,6 +1905,33 @@
     }
   },
   {
+    "type": "member",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "anonymous_initializer",
+          "named": true
+        },
+        {
+          "type": "companion_object",
+          "named": true
+        },
+        {
+          "type": "declaration_",
+          "named": true
+        },
+        {
+          "type": "secondary_constructor",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "member_modifier",
     "named": true,
     "fields": {}
@@ -2441,15 +2451,7 @@
           "named": true
         },
         {
-          "type": "line_string_literal",
-          "named": true
-        },
-        {
           "type": "long_literal",
-          "named": true
-        },
-        {
-          "type": "multi_line_string_literal",
           "named": true
         },
         {
@@ -2466,6 +2468,10 @@
         },
         {
           "type": "simple_identifier",
+          "named": true
+        },
+        {
+          "type": "string_literal",
           "named": true
         },
         {
@@ -2536,7 +2542,7 @@
     }
   },
   {
-    "type": "property_declaration",
+    "type": "property",
     "named": true,
     "fields": {},
     "children": {
@@ -2943,6 +2949,25 @@
       "types": [
         {
           "type": "statement_",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "string_literal",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "line_string_literal",
+          "named": true
+        },
+        {
+          "type": "multi_line_string_literal",
           "named": true
         }
       ]
