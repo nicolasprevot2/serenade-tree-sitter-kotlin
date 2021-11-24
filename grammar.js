@@ -216,7 +216,7 @@ module.exports = grammar({
         alias($.simple_identifier, $.identifier),
         optional($.type_parameters),
         optional($.primary_constructor),
-        optional(seq(":", $._delegation_specifiers)),
+        optional_with_placeholder("implements_list_optional", seq(":", alias($.delegation_specifiers_, $.implements_list))),
         optional($.type_constraints),
         optional($.class_body)
       ),
@@ -226,7 +226,7 @@ module.exports = grammar({
         alias($.simple_identifier, $.identifier),
         optional($.type_parameters),
         optional($.primary_constructor),
-        optional(seq(":", $._delegation_specifiers)),
+        optional_with_placeholder("implements_list_optional", seq(":", alias($.delegation_specifiers_, $.implements_list))),
         optional($.type_constraints),
         optional($.enum_class_body)
       )
@@ -259,8 +259,8 @@ module.exports = grammar({
       optional(seq("=", $.expression_))
     ),
 
-    _delegation_specifiers: $ => prec.left(sep1(
-      $.delegation_specifier,
+    delegation_specifiers_: $ => prec.left(sep1(
+      alias($.delegation_specifier, $.implements_type),
       // $._annotated_delegation_specifier, // TODO: Annotations cause ambiguities with type modifiers
       ","
     )),
@@ -322,7 +322,7 @@ module.exports = grammar({
       "companion",
       "object",
       optional(alias($.simple_identifier, $.type_identifier)),
-      optional(seq(":", $._delegation_specifiers)),
+      optional(seq(":", $.delegation_specifiers_)),
       optional($.class_body)
     ),
 
@@ -432,7 +432,7 @@ module.exports = grammar({
       optional($.modifiers),
       "object",
       alias($.simple_identifier, $.type_identifier),
-      optional(seq(":", $._delegation_specifiers)),
+      optional(seq(":", $.delegation_specifiers_)),
       optional($.class_body)
     )),
 
@@ -837,7 +837,7 @@ module.exports = grammar({
 
     object_literal: $ => seq(
       "object",
-      optional(seq(":", $._delegation_specifiers)),
+      optional(seq(":", $.delegation_specifiers_)),
       $.class_body
     ),
 
