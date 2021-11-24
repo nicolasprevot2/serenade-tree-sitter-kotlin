@@ -334,28 +334,17 @@
   {
     "type": "class_body",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "anonymous_initializer",
-          "named": true
-        },
-        {
-          "type": "companion_object",
-          "named": true
-        },
-        {
-          "type": "declaration_",
-          "named": true
-        },
-        {
-          "type": "secondary_constructor",
-          "named": true
-        }
-      ]
+    "fields": {
+      "class_member_list": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "class_member_declarations_",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -396,6 +385,33 @@
         },
         {
           "type": "type_parameters",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "class_member_declarations_",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "anonymous_initializer",
+          "named": true
+        },
+        {
+          "type": "companion_object",
+          "named": true
+        },
+        {
+          "type": "declaration_",
+          "named": true
+        },
+        {
+          "type": "secondary_constructor",
           "named": true
         }
       ]
@@ -859,32 +875,29 @@
   {
     "type": "enum_class_body",
     "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "anonymous_initializer",
-          "named": true
-        },
-        {
-          "type": "companion_object",
-          "named": true
-        },
-        {
-          "type": "declaration_",
-          "named": true
-        },
-        {
-          "type": "enum_entry",
-          "named": true
-        },
-        {
-          "type": "secondary_constructor",
-          "named": true
-        }
-      ]
+    "fields": {
+      "enum_member_list": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": "class_member_declarations_",
+            "named": true
+          },
+          {
+            "type": "enum_entry",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {

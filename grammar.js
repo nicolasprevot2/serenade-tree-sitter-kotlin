@@ -230,7 +230,11 @@ module.exports = grammar({
       $._class_parameters
     ),
 
-    class_body: $ => seq("{", optional($._class_member_declarations), "}"),
+    class_body: $ => seq(
+      "{", 
+      optional_with_placeholder("class_member_list", $.class_member_declarations_), 
+      "}"
+    ),
 
     _class_parameters: $ => seq(
       "(",
@@ -295,7 +299,7 @@ module.exports = grammar({
     // Class members
     // ==========
 
-    _class_member_declarations: $ => repeat1(seq($._class_member_declaration, $._semis)),
+    class_member_declarations_: $ => repeat1(seq($._class_member_declaration, $._semis)),
 
     _class_member_declaration: $ => choice(
       $.declaration_,
@@ -438,8 +442,10 @@ module.exports = grammar({
 
     enum_class_body: $ => seq(
       "{",
-      optional($._enum_entries),
-      optional(seq(";", optional($._class_member_declarations))),
+      optional_with_placeholder("enum_member_list", seq(
+        optional($._enum_entries),
+        optional(seq(";", optional($.class_member_declarations_))),
+      )),
       "}"
     ),
 
