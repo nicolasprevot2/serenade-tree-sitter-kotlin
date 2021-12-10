@@ -46,17 +46,17 @@ const PREC = {
   BLOCK: 1,
   LAMBDA_LITERAL: 0,
   RETURN_OR_THROW: 0,
-  COMMENT: 0
+  COMMENT: 0,
 };
 const DEC_DIGITS = token(sep1(/[0-9]+/, /_+/));
 const HEX_DIGITS = token(sep1(/[0-9a-fA-F]+/, /_+/));
 const BIN_DIGITS = token(sep1(/[01]/, /_+/));
-const REAL_EXPONENT = token(seq(/[eE]/, optional(/[+-]/), DEC_DIGITS))
+const REAL_EXPONENT = token(seq(/[eE]/, optional(/[+-]/), DEC_DIGITS));
 
 module.exports = grammar({
   name: "kotlin",
 
-  conflicts: $ => [
+  conflicts: ($) => [
     // Ambiguous when used in an explicit delegation expression,
     // since the '{' could either be interpreted as the class body
     // or as the anonymous function body. Consider the following sequence:
@@ -112,23 +112,21 @@ module.exports = grammar({
     [$.getter, $.simple_identifier],
 
     // serenade if style inherently has conflicts
-    [$.if], 
+    [$.if],
     [$.if_clause, $.else_if_clause],
     [$.return],
-    [$.variable_declaration], 
-    [$.property_assignment]
+    [$.variable_declaration],
+    [$.property_assignment],
   ],
 
-  externals: $ => [
-    $._automatic_semicolon,
-  ],
+  externals: ($) => [$._automatic_semicolon],
 
-  extras: $ => [
+  extras: ($) => [
     $.comment,
-    /\s+/ // Whitespace
+    /\s+/, // Whitespace
   ],
 
-  word: $ => $._alpha_identifier,
+  word: ($) => $._alpha_identifier,
 
   rules: {
     // ====================
@@ -140,1151 +138,1234 @@ module.exports = grammar({
     // ==========
 
     // start
-    program: $ => seq(
-      optional($.shebang_line),
-      repeat($.file_annotation),
-      optional($.package_header),
-      optional_with_placeholder("import_list", repeat($.import)),
-      optional_with_placeholder("statement_list", repeat($.statement)),
-    ),
-
-    statement: $ => seq(
-      $.statement_, $._semi
-    ),
-
-    shebang_line: $ => seq("#!", /[^\r\n]*/),
-
-    file_annotation: $ => seq(
-      "@", "file", ":",
-      choice(
-        seq("[", repeat1($._unescaped_annotation), "]"),
-        $._unescaped_annotation
+    program: ($) =>
+      seq(
+        optional($.shebang_line),
+        repeat($.file_annotation),
+        optional($.package_header),
+        optional_with_placeholder("import_list", repeat($.import)),
+        optional_with_placeholder("statement_list", repeat($.statement))
       ),
-      $._semi
-    ),
 
-    package_header: $ => seq("package", $.identifier, $._semi),
+    statement: ($) => seq($.statement_, $._semi),
 
-    import: $ => seq(
-      "import",
-      $.identifier,
-      optional(choice(seq(".*"), $.import_alias)),
-      $._semi
-    ),
+    shebang_line: ($) => seq("#!", /[^\r\n]*/),
 
-    import_alias: $ => seq("as", alias($.simple_identifier, $.type_identifier)),
+    file_annotation: ($) =>
+      seq(
+        "@",
+        "file",
+        ":",
+        choice(
+          seq("[", repeat1($._unescaped_annotation), "]"),
+          $._unescaped_annotation
+        ),
+        $._semi
+      ),
 
-    top_level_object: $ => seq($.declaration_, optional($._semis)),
+    package_header: ($) => seq("package", $.identifier, $._semi),
 
-    type_alias: $ => seq(
-      optional($.modifiers),
-      "typealias",
-      alias($.simple_identifier, $.type_identifier),
-      "=",
-      $._type
-    ),
+    import: ($) =>
+      seq(
+        "import",
+        $.identifier,
+        optional(choice(seq(".*"), $.import_alias)),
+        $._semi
+      ),
 
-    declaration_: $ => choice(
-      $.class_declaration,
-      $.object_declaration,
-      $.function,
-      $.property,
-      // TODO: it would be better to have getter/setter only in
-      // property but it's difficult to get ASI
-      // (Automatic Semicolon Insertion) working in the lexer for
-      // getter/setter. Indeed, they can also have modifiers in
-      // front, which means it's not enough to lookahead for 'get' or 'set' in
-      // the lexer, you also need to handle modifier keywords. It is thus
-      // simpler to accept them here.
-      $.getter,
-      $.setter,
-      $.type_alias
-    ),
+    import_alias: ($) =>
+      seq("as", alias($.simple_identifier, $.type_identifier)),
+
+    top_level_object: ($) => seq($.declaration_, optional($._semis)),
+
+    type_alias: ($) =>
+      seq(
+        optional($.modifiers),
+        "typealias",
+        alias($.simple_identifier, $.type_identifier),
+        "=",
+        $._type
+      ),
+
+    declaration_: ($) =>
+      choice(
+        $.class_declaration,
+        $.object_declaration,
+        $.function,
+        $.property,
+        // TODO: it would be better to have getter/setter only in
+        // property but it's difficult to get ASI
+        // (Automatic Semicolon Insertion) working in the lexer for
+        // getter/setter. Indeed, they can also have modifiers in
+        // front, which means it's not enough to lookahead for 'get' or 'set' in
+        // the lexer, you also need to handle modifier keywords. It is thus
+        // simpler to accept them here.
+        $.getter,
+        $.setter,
+        $.type_alias
+      ),
 
     // ==========
     // Classes
     // ==========
 
-    class_declaration: $ => prec.right(choice(
+    class_declaration: ($) =>
+      prec.right(
+        choice(
+          seq(
+            optional($.modifiers),
+            choice("class", "interface"),
+            alias($.simple_identifier, $.identifier),
+            optional($.type_parameters),
+            optional($.primary_constructor),
+            optional_with_placeholder(
+              "implements_list_optional",
+              seq(":", alias($.delegation_specifiers_, $.implements_list))
+            ),
+            optional($.type_constraints),
+            optional($.class_body)
+          ),
+          seq(
+            optional($.modifiers),
+            "enum",
+            "class",
+            alias($.simple_identifier, $.identifier),
+            optional($.type_parameters),
+            optional($.primary_constructor),
+            optional_with_placeholder(
+              "implements_list_optional",
+              seq(":", alias($.delegation_specifiers_, $.implements_list))
+            ),
+            optional($.type_constraints),
+            optional($.enum_class_body)
+          )
+        )
+      ),
+
+    primary_constructor: ($) =>
+      seq(
+        optional(seq(optional($.modifiers), "constructor")),
+        $._class_parameters
+      ),
+
+    class_body: ($) =>
+      seq(
+        "{",
+        optional_with_placeholder(
+          "class_member_list",
+          $.class_member_declarations_
+        ),
+        "}"
+      ),
+
+    _class_parameters: ($) =>
+      seq("(", optional(sep1($.class_parameter, ",")), optional(","), ")"),
+
+    class_parameter: ($) =>
       seq(
         optional($.modifiers),
-        choice("class", "interface"),
-        alias($.simple_identifier, $.identifier),
-        optional($.type_parameters),
-        optional($.primary_constructor),
-        optional_with_placeholder("implements_list_optional", seq(":", alias($.delegation_specifiers_, $.implements_list))),
-        optional($.type_constraints),
-        optional($.class_body)
+        optional(choice("val", "var")),
+        $.simple_identifier,
+        ":",
+        $._type,
+        optional(seq("=", $.expression_))
       ),
+
+    delegation_specifiers_: ($) =>
+      prec.left(
+        sep1(
+          alias($.delegation_specifier, $.implements_type),
+          // $._annotated_delegation_specifier, // TODO: Annotations cause ambiguities with type modifiers
+          ","
+        )
+      ),
+
+    delegation_specifier: ($) =>
+      prec.left(
+        choice(
+          $.constructor_invocation,
+          $.explicit_delegation,
+          $.user_type,
+          $.function_type
+        )
+      ),
+
+    constructor_invocation: ($) => seq($.user_type, $.value_arguments),
+
+    _annotated_delegation_specifier: ($) =>
+      seq(repeat($.annotation), $.delegation_specifier),
+
+    explicit_delegation: ($) =>
+      seq(choice($.user_type, $.function_type), "by", $.expression_),
+
+    type_parameters: ($) => seq("<", sep1($.type_parameter, ","), ">"),
+
+    type_parameter: ($) =>
       seq(
-        optional($.modifiers),
-        "enum", "class",
-        alias($.simple_identifier, $.identifier),
-        optional($.type_parameters),
-        optional($.primary_constructor),
-        optional_with_placeholder("implements_list_optional", seq(":", alias($.delegation_specifiers_, $.implements_list))),
-        optional($.type_constraints),
-        optional($.enum_class_body)
-      )
-    )),
-
-    primary_constructor: $ => seq(
-      optional(seq(optional($.modifiers), "constructor")),
-      $._class_parameters
-    ),
-
-    class_body: $ => seq(
-      "{", 
-      optional_with_placeholder("class_member_list", $.class_member_declarations_), 
-      "}"
-    ),
-
-    _class_parameters: $ => seq(
-      "(",
-      optional(sep1($.class_parameter, ",")),
-      optional(","),
-      ")"
-    ),
-
-    class_parameter: $ => seq(
-      optional($.modifiers),
-      optional(choice("val", "var")),
-      $.simple_identifier,
-      ":",
-      $._type,
-      optional(seq("=", $.expression_))
-    ),
-
-    delegation_specifiers_: $ => prec.left(sep1(
-      alias($.delegation_specifier, $.implements_type),
-      // $._annotated_delegation_specifier, // TODO: Annotations cause ambiguities with type modifiers
-      ","
-    )),
-
-    delegation_specifier: $ => prec.left(choice(
-      $.constructor_invocation,
-      $.explicit_delegation,
-      $.user_type,
-      $.function_type
-    )),
-
-    constructor_invocation: $ => seq($.user_type, $.value_arguments),
-
-    _annotated_delegation_specifier: $ => seq(repeat($.annotation), $.delegation_specifier),
-
-    explicit_delegation: $ => seq(
-      choice(
-        $.user_type,
-        $.function_type
+        optional($.type_parameter_modifiers),
+        alias($.simple_identifier, $.type_identifier),
+        optional(seq(":", $._type))
       ),
-      "by",
-      $.expression_
-    ),
 
-    type_parameters: $ => seq("<", sep1($.type_parameter, ","), ">"),
+    type_constraints: ($) =>
+      prec.right(seq("where", sep1($.type_constraint, ","))),
 
-    type_parameter: $ => seq(
-      optional($.type_parameter_modifiers),
-      alias($.simple_identifier, $.type_identifier),
-      optional(seq(":", $._type))
-    ),
-
-    type_constraints: $ => prec.right(seq("where", sep1($.type_constraint, ","))),
-
-    type_constraint: $ => seq(
-      repeat($.annotation),
-      alias($.simple_identifier, $.type_identifier),
-      ":",
-      $._type
-    ),
+    type_constraint: ($) =>
+      seq(
+        repeat($.annotation),
+        alias($.simple_identifier, $.type_identifier),
+        ":",
+        $._type
+      ),
 
     // ==========
     // Class members
     // ==========
 
-    class_member_declarations_: $ => repeat1(seq(alias($._class_member_declaration, $.member), $._semis)),
+    class_member_declarations_: ($) =>
+      repeat1(seq(alias($._class_member_declaration, $.member), $._semis)),
 
-    _class_member_declaration: $ => choice(
-      $.declaration_,
-      $.companion_object,
-      $.anonymous_initializer,
-      $.secondary_constructor
-    ),
-
-    anonymous_initializer: $ => seq("init", $.enclosed_body),
-
-    companion_object: $ => seq(
-      optional($.modifiers),
-      "companion",
-      "object",
-      optional(alias($.simple_identifier, $.type_identifier)),
-      optional(seq(":", $.delegation_specifiers_)),
-      optional($.class_body)
-    ),
-
-    function_value_parameters_: $ => seq(
-      "(",
-      optional_with_placeholder('parameter_list', seq(
-        optional(sep1(alias($.function_value_parameter_, $.parameter), ",")),
-        optional(","),
-      )),
-      ")"
-    ),
-
-    function_value_parameter_: $ => seq(
-      optional($.parameter_modifiers),
-      $.parameter_,
-      optional(seq("=", $.expression_))
-    ),
-
-    _receiver_type: $ => seq(
-      optional($.type_modifiers),
-      choice (
-        $._type_reference,
-        $.parenthesized_type,
-        $.nullable_type
-      )
-    ),
-
-    function: $ => prec.right(seq( // TODO
-      optional($.modifiers),
-      "fun",
-      optional($.type_parameters),
-      optional(seq($._receiver_type, optional('.'))),
-      field('identifier', $.simple_identifier),
-      $.function_value_parameters_,
-      optional_with_placeholder("type_optional", 
-        seq(":", alias($._type, $.type))
+    _class_member_declaration: ($) =>
+      choice(
+        $.declaration_,
+        $.companion_object,
+        $.anonymous_initializer,
+        $.secondary_constructor
       ),
-      optional($.type_constraints),
-      optional($.function_body)
-    )),
 
-    function_body: $ => choice($.enclosed_body, seq("=", $.expression_)),
+    anonymous_initializer: ($) => seq("init", $.enclosed_body),
 
-    single_variable_declaration: $ => prec.left(PREC.VAR_DECL, seq(
-      // repeat($.annotation), TODO
-      field('identifier', $.simple_identifier),
-      optional_with_placeholder("type_optional", seq(":", alias($._type, $.type)))
-    )),
+    companion_object: ($) =>
+      seq(
+        optional($.modifiers),
+        "companion",
+        "object",
+        optional(alias($.simple_identifier, $.type_identifier)),
+        optional(seq(":", $.delegation_specifiers_)),
+        optional($.class_body)
+      ),
 
-    variable_declaration: $ => alias($.property_assignment, $.assignment),
-
-    property_assignment: $ => seq(
-      choice(
-        alias($.single_variable_declaration, $.assignment_variable), 
-        $.multi_variable_declaration
-      ), 
-      optional($.type_constraints),
-      optional_with_placeholder(
-        "assignment_value_list_optional", 
-        alias($.property_assignment_value, $.assignment_value)
-      )
-    ),
-
-    property_assignment_value: $ => choice(
-      seq("=", $.expression_),
-      $.property_delegate
-    ),
-
-    property: $ => prec.right(seq(
-      optional($.modifiers),
-      choice("val", "var"),
-      optional($.type_parameters),
-      optional(seq($._receiver_type, optional('.'))),
-      $.variable_declaration,
-      optional(';'),
-      choice(
-        // TODO: Getter-setter combinations
-        optional($.getter),
-        optional($.setter)
-      )
-    )),
-
-    property_delegate: $ => seq("by", $.expression_),
-
-    getter: $ => prec.right(seq(
-      optional($.modifiers),
-      "get",
-      optional(seq(
-        "(", ")",
-        optional(seq(":", $._type)),
-        $.function_body
-      ))
-    )),
-
-    setter: $ => prec.right(seq(
-      optional($.modifiers),
-      "set",
-      optional(seq(
+    function_value_parameters_: ($) =>
+      seq(
         "(",
-        $.parameter_with_optional_type,
-        ")",
-        optional(seq(":", $._type)),
-        $.function_body
-      ))
-    )),
+        optional_with_placeholder(
+          "parameter_list",
+          seq(
+            optional(
+              sep1(alias($.function_value_parameter_, $.parameter), ",")
+            ),
+            optional(",")
+          )
+        ),
+        ")"
+      ),
 
-    parameters_with_optional_type: $ => seq("(", sep1($.parameter_with_optional_type, ","), ")"),
+    function_value_parameter_: ($) =>
+      seq(
+        optional($.parameter_modifiers),
+        $.parameter_,
+        optional(seq("=", $.expression_))
+      ),
 
-    parameter_with_optional_type: $ => seq(
-      optional($.parameter_modifiers),
-      $.simple_identifier,
-      optional(seq(":", $._type))
-    ),
+    receiver_type_: ($) =>
+      seq(
+        optional($.type_modifiers),
+        choice($.type_reference_, $.parenthesized_type, $.nullable_type)
+      ),
 
-    parameter_: $ => seq(
-      field('identifier', $.simple_identifier), 
-      field('type_optional', seq(":", alias($._type, $.type)))
-    ),
+    function: ($) =>
+      prec.right(
+        seq(
+          // TODO
+          optional($.modifiers),
+          "fun",
+          optional($.type_parameters),
+          optional(seq($.receiver_type_, optional("."))),
+          field("identifier", $.simple_identifier),
+          $.function_value_parameters_,
+          optional_with_placeholder(
+            "type_optional",
+            seq(":", alias($._type, $.type))
+          ),
+          optional($.type_constraints),
+          optional($.function_body)
+        )
+      ),
 
-    object_declaration: $ => prec.right(seq(
-      optional($.modifiers),
-      "object",
-      alias($.simple_identifier, $.type_identifier),
-      optional(seq(":", $.delegation_specifiers_)),
-      optional($.class_body)
-    )),
+    function_body: ($) => choice($.enclosed_body, seq("=", $.expression_)),
 
-    secondary_constructor: $ => seq(
-      optional($.modifiers),
-      "constructor",
-      $.function_value_parameters_,
-      optional(seq(":", $.constructor_delegation_call)),
-      optional($.enclosed_body)
-    ),
+    single_variable_declaration: ($) =>
+      prec.left(
+        PREC.VAR_DECL,
+        seq(
+          // repeat($.annotation), TODO
+          field("identifier", $.simple_identifier),
+          optional_with_placeholder(
+            "type_optional",
+            seq(":", alias($._type, $.type))
+          )
+        )
+      ),
 
-    constructor_delegation_call: $ => seq(choice("this", "super"), $.value_arguments),
+    variable_declaration: ($) => alias($.property_assignment, $.assignment),
+
+    property_assignment: ($) =>
+      seq(
+        choice(
+          alias($.single_variable_declaration, $.assignment_variable),
+          $.multi_variable_declaration
+        ),
+        optional($.type_constraints),
+        optional_with_placeholder(
+          "assignment_value_list_optional",
+          alias($.property_assignment_value, $.assignment_value)
+        )
+      ),
+
+    property_assignment_value: ($) =>
+      choice(seq("=", $.expression_), $.property_delegate),
+
+    property: ($) =>
+      prec.right(
+        seq(
+          optional($.modifiers),
+          choice("val", "var"),
+          optional($.type_parameters),
+          optional(seq($.receiver_type_, optional("."))),
+          $.variable_declaration,
+          optional(";"),
+          choice(
+            // TODO: Getter-setter combinations
+            optional($.getter),
+            optional($.setter)
+          )
+        )
+      ),
+
+    property_delegate: ($) => seq("by", $.expression_),
+
+    getter: ($) =>
+      prec.right(
+        seq(
+          optional($.modifiers),
+          "get",
+          optional(seq("(", ")", optional(seq(":", $._type)), $.function_body))
+        )
+      ),
+
+    setter: ($) =>
+      prec.right(
+        seq(
+          optional($.modifiers),
+          "set",
+          optional(
+            seq(
+              "(",
+              $.parameter_with_optional_type,
+              ")",
+              optional(seq(":", $._type)),
+              $.function_body
+            )
+          )
+        )
+      ),
+
+    parameters_with_optional_type: ($) =>
+      seq("(", sep1($.parameter_with_optional_type, ","), ")"),
+
+    parameter_with_optional_type: ($) =>
+      seq(
+        optional($.parameter_modifiers),
+        $.simple_identifier,
+        optional(seq(":", $._type))
+      ),
+
+    parameter_: ($) =>
+      seq(
+        field("identifier", $.simple_identifier),
+        field("type_optional", seq(":", alias($._type, $.type)))
+      ),
+
+    object_declaration: ($) =>
+      prec.right(
+        seq(
+          optional($.modifiers),
+          "object",
+          alias($.simple_identifier, $.type_identifier),
+          optional(seq(":", $.delegation_specifiers_)),
+          optional($.class_body)
+        )
+      ),
+
+    secondary_constructor: ($) =>
+      seq(
+        optional($.modifiers),
+        "constructor",
+        $.function_value_parameters_,
+        optional(seq(":", $.constructor_delegation_call)),
+        optional($.enclosed_body)
+      ),
+
+    constructor_delegation_call: ($) =>
+      seq(choice("this", "super"), $.value_arguments),
 
     // ==========
     // Enum classes
     // ==========
 
-    enum_class_body: $ => seq(
-      "{",
-      optional_with_placeholder("enum_member_list", seq(
-        optional($._enum_entries),
-        optional(seq(";", optional($.class_member_declarations_))),
-      )),
-      "}"
-    ),
+    enum_class_body: ($) =>
+      seq(
+        "{",
+        optional_with_placeholder(
+          "enum_member_list",
+          seq(
+            optional($._enum_entries),
+            optional(seq(";", optional($.class_member_declarations_)))
+          )
+        ),
+        "}"
+      ),
 
-    _enum_entries: $ => seq(sep1($.enum_entry, ","), optional(",")),
+    _enum_entries: ($) => seq(sep1($.enum_entry, ","), optional(",")),
 
-    enum_entry: $ => seq(
-      optional($.modifiers),
-      $.simple_identifier,
-      optional($.value_arguments),
-      optional($.class_body)
-    ),
+    enum_entry: ($) =>
+      seq(
+        optional($.modifiers),
+        $.simple_identifier,
+        optional($.value_arguments),
+        optional($.class_body)
+      ),
 
     // ==========
     // Types
     // ==========
 
-    _type: $ => seq(
-      optional($.type_modifiers),
-      choice(
-        $.parenthesized_type,
-        $.nullable_type,
-        $._type_reference,
-        $.function_type
-      )
-    ),
+    _type: ($) =>
+      seq(
+        optional($.type_modifiers),
+        choice(
+          $.parenthesized_type,
+          $.nullable_type,
+          $.type_reference_,
+          $.function_type
+        )
+      ),
 
-    _type_reference: $ => choice(
-      $.user_type,
-      "dynamic"
-    ),
+    type_reference_: ($) => choice($.user_type, "dynamic"),
 
-    nullable_type: $ => seq(
-      choice($._type_reference, $.parenthesized_type),
-      repeat1($._quest)
-    ),
+    nullable_type: ($) =>
+      seq(choice($.type_reference_, $.parenthesized_type), repeat1($._quest)),
 
-    _quest: $ => "?",
+    _quest: ($) => "?",
 
     // TODO: Figure out a better solution than right associativity
     //       to prevent nested types from being recognized as
     //       unary expresions with navigation suffixes.
 
-    user_type: $ => sep1($._simple_user_type, "."),
+    user_type: ($) => sep1($._simple_user_type, "."),
 
-    _simple_user_type: $ => prec.right(PREC.SIMPLE_USER_TYPE, seq(
-      alias($.simple_identifier, $.type_identifier),
-      optional($.type_arguments)
-    )),
+    _simple_user_type: ($) =>
+      prec.right(
+        PREC.SIMPLE_USER_TYPE,
+        seq(
+          alias($.simple_identifier, $.type_identifier),
+          optional($.type_arguments)
+        )
+      ),
 
-    type_projection: $ => choice(
-      seq(optional($.type_projection_modifiers), $._type),
-      "*"
-    ),
+    type_projection: ($) =>
+      choice(seq(optional($.type_projection_modifiers), $._type), "*"),
 
-    type_projection_modifiers: $ => repeat1($._type_projection_modifier),
+    type_projection_modifiers: ($) => repeat1($._type_projection_modifier),
 
-    _type_projection_modifier: $ => $.variance_modifier,
+    _type_projection_modifier: ($) => $.variance_modifier,
 
-    function_type: $ => seq(
-      optional(seq($._simple_user_type, ".")), // TODO: Support "real" types
-      $.function_type_parameters,
-      "->",
-      $._type
-    ),
+    function_type: ($) =>
+      seq(
+        optional(seq($._simple_user_type, ".")), // TODO: Support "real" types
+        $.function_type_parameters,
+        "->",
+        $._type
+      ),
 
     // A higher-than-default precedence resolves the ambiguity with 'parenthesized_type'
-    function_type_parameters: $ => prec.left(1, seq(
-      "(",
-      optional(sep1(choice($.parameter_, $._type), ",")),
-      ")"
-    )),
+    function_type_parameters: ($) =>
+      prec.left(
+        1,
+        seq("(", optional(sep1(choice($.parameter_, $._type), ",")), ")")
+      ),
 
-    parenthesized_type: $ => seq("(", $._type, ")"),
+    parenthesized_type: ($) => seq("(", $._type, ")"),
 
-    parenthesized_user_type: $ => seq(
-      "(",
-      choice($.user_type, $.parenthesized_user_type),
-      ")"
-    ),
+    parenthesized_user_type: ($) =>
+      seq("(", choice($.user_type, $.parenthesized_user_type), ")"),
 
     // ==========
     // Statements
     // ==========
 
-    statements: $ => seq(
-      $.statement_,
-      repeat(seq($._semis, $.statement_)),
-      optional($._semis),
-    ),
-
-    statement_: $ => field('statement', choice(
-      $.declaration_,
+    statements: ($) =>
       seq(
-        repeat(choice($.label, $.annotation)),
+        $.statement_,
+        repeat(seq($._semis, $.statement_)),
+        optional($._semis)
+      ),
+
+    statement_: ($) =>
+      field(
+        "statement",
         choice(
-          $.assignment,
-          $.loop_statement_,
-          $.expression_
+          $.declaration_,
+          seq(
+            repeat(choice($.label, $.annotation)),
+            choice($.assignment, $.loop_statement_, $.expression_)
+          )
         )
-      )
-    )),
+      ),
 
-    label: $ => token(seq(
-      /[a-zA-Z_][a-zA-Z_0-9]*/,
-      "@"
-    )),
+    label: ($) => token(seq(/[a-zA-Z_][a-zA-Z_0-9]*/, "@")),
 
-    control_structure_body: $ => choice($.enclosed_body, alias($.statement_, $.statement)),
+    control_structure_body: ($) =>
+      choice($.enclosed_body, alias($.statement_, $.statement)),
 
-    enclosed_body: $ => prec(PREC.BLOCK, seq(
-      "{", 
-      optional_with_placeholder('statement_list', $.statements),
-      "}"
-    )),
+    enclosed_body: ($) =>
+      prec(
+        PREC.BLOCK,
+        seq("{", optional_with_placeholder("statement_list", $.statements), "}")
+      ),
 
-    loop_statement_: $ => choice(
-      $.for,
-      $.while,
-      $.do_while_statement
-    ),
+    loop_statement_: ($) => choice($.for, $.while, $.do_while_statement),
 
-    for: $ => $.for_each_clause, 
+    for: ($) => $.for_each_clause,
 
-    for_each_clause: $ => prec.right(seq(
-      "for",
-      "(",
-      field("block_iterator", seq(
-        repeat($.annotation),
-        choice($.single_variable_declaration, $.multi_variable_declaration),
-      )),
-      field("for_each_separator", "in"),
-      field("block_collection", $.expression_),
-      ")",
-      optional($.control_structure_body)
-    )),
+    for_each_clause: ($) =>
+      prec.right(
+        seq(
+          "for",
+          "(",
+          field(
+            "block_iterator",
+            seq(
+              repeat($.annotation),
+              choice(
+                $.single_variable_declaration,
+                $.multi_variable_declaration
+              )
+            )
+          ),
+          field("for_each_separator", "in"),
+          field("block_collection", $.expression_),
+          ")",
+          optional($.control_structure_body)
+        )
+      ),
 
-    while: $ => $.while_clause, 
+    while: ($) => $.while_clause,
 
-    while_clause: $ => seq(
-      "while",
-      "(",
-      alias($.expression_, $.condition),
-      ")",
-      choice(";", $.control_structure_body)
-    ),
+    while_clause: ($) =>
+      seq(
+        "while",
+        "(",
+        alias($.expression_, $.condition),
+        ")",
+        choice(";", $.control_structure_body)
+      ),
 
-    do_while_statement: $ => prec.right(seq(
-      "do",
-      optional($.control_structure_body),
-      "while",
-      "(",
-      $.expression_,
-      ")",
-    )),
+    do_while_statement: ($) =>
+      prec.right(
+        seq(
+          "do",
+          optional($.control_structure_body),
+          "while",
+          "(",
+          $.expression_,
+          ")"
+        )
+      ),
 
     // See also https://github.com/tree-sitter/tree-sitter/issues/160
     // generic EOF/newline token
-    _semi: $ => choice($._automatic_semicolon, ';'),
+    _semi: ($) => choice($._automatic_semicolon, ";"),
 
-    _semis: $ => choice($._automatic_semicolon, ';'),
+    _semis: ($) => choice($._automatic_semicolon, ";"),
 
-    assignment: $ => choice(
-      prec.left(PREC.ASSIGNMENT, seq($.directly_assignable_expression, $._assignment_and_operator, $.assignment_value)),
-      prec.left(PREC.ASSIGNMENT, seq($.directly_assignable_expression, "=", $.assignment_value)),
-      // TODO
-    ),
+    assignment: ($) =>
+      choice(
+        prec.left(
+          PREC.ASSIGNMENT,
+          seq(
+            $.directly_assignable_expression,
+            $._assignment_and_operator,
+            $.assignment_value
+          )
+        ),
+        prec.left(
+          PREC.ASSIGNMENT,
+          seq($.directly_assignable_expression, "=", $.assignment_value)
+        )
+        // TODO
+      ),
 
-    assignment_value: $ => $.expression_,
+    assignment_value: ($) => $.expression_,
 
     // ==========
     // Expressions
     // ==========
 
-    expression_: $ => choice(
-      $.primary_expression_,
-      $._unary_expression,
-      $._binary_expression
-    ),
+    expression_: ($) =>
+      choice($.primary_expression_, $._unary_expression, $._binary_expression),
 
     // Unary expressions
 
-    _unary_expression: $ => choice(
-      $.postfix_expression,
-      $.call,
-      $.indexing_expression,
-      $.navigation_expression,
-      $.prefix_expression,
-      $.as_expression,
-      $.spread_expression
-    ),
+    _unary_expression: ($) =>
+      choice(
+        $.postfix_expression,
+        $.call,
+        $.indexing_expression,
+        $.navigation_expression,
+        $.prefix_expression,
+        $.as_expression,
+        $.spread_expression
+      ),
 
-    postfix_expression: $ => prec.left(PREC.POSTFIX, seq($.expression_, $._postfix_unary_operator)),
+    postfix_expression: ($) =>
+      prec.left(PREC.POSTFIX, seq($.expression_, $._postfix_unary_operator)),
 
-    call: $ => prec.left(PREC.POSTFIX, seq($.expression_, $.call_suffix)),
+    call: ($) => prec.left(PREC.POSTFIX, seq($.expression_, $.call_suffix)),
 
-    indexing_expression: $ => prec.left(PREC.POSTFIX, seq($.expression_, $.indexing_suffix)),
+    indexing_expression: ($) =>
+      prec.left(PREC.POSTFIX, seq($.expression_, $.indexing_suffix)),
 
-    navigation_expression: $ => prec.left(PREC.POSTFIX, seq($.expression_, $.navigation_suffix)),
+    navigation_expression: ($) =>
+      prec.left(PREC.POSTFIX, seq($.expression_, $.navigation_suffix)),
 
-    prefix_expression: $ => prec.right(seq(choice($.annotation, $.label, $._prefix_unary_operator), $.expression_)),
+    prefix_expression: ($) =>
+      prec.right(
+        seq(
+          choice($.annotation, $.label, $._prefix_unary_operator),
+          $.expression_
+        )
+      ),
 
-    as_expression: $ => prec.left(PREC.AS, seq($.expression_, $._as_operator, $._type)),
+    as_expression: ($) =>
+      prec.left(PREC.AS, seq($.expression_, $._as_operator, $._type)),
 
-    spread_expression: $ => prec.left(PREC.SPREAD, seq("*", $.expression_)),
+    spread_expression: ($) => prec.left(PREC.SPREAD, seq("*", $.expression_)),
 
     // Binary expressions
 
-    _binary_expression: $ => choice(
-      $.multiplicative_expression,
-      $.additive_expression,
-      $.range_expression,
-      $.infix_expression,
-      $.elvis_expression,
-      $.check_expression,
-      $.comparison_expression,
-      $.equality_expression,
-      $.comparison_expression,
-      $.equality_expression,
-      $.conjunction_expression,
-      $.disjunction_expression
-    ),
+    _binary_expression: ($) =>
+      choice(
+        $.multiplicative_expression,
+        $.additive_expression,
+        $.range_expression,
+        $.infix_expression,
+        $.elvis_expression,
+        $.check_expression,
+        $.comparison_expression,
+        $.equality_expression,
+        $.comparison_expression,
+        $.equality_expression,
+        $.conjunction_expression,
+        $.disjunction_expression
+      ),
 
-    multiplicative_expression: $ => prec.left(PREC.MULTIPLICATIVE, seq($.expression_, $._multiplicative_operator, $.expression_)),
+    multiplicative_expression: ($) =>
+      prec.left(
+        PREC.MULTIPLICATIVE,
+        seq($.expression_, $._multiplicative_operator, $.expression_)
+      ),
 
-    additive_expression: $ => prec.left(PREC.ADDITIVE, seq($.expression_, $._additive_operator, $.expression_)),
+    additive_expression: ($) =>
+      prec.left(
+        PREC.ADDITIVE,
+        seq($.expression_, $._additive_operator, $.expression_)
+      ),
 
-    range_expression: $ => prec.left(PREC.RANGE, seq($.expression_, "..", $.expression_)),
+    range_expression: ($) =>
+      prec.left(PREC.RANGE, seq($.expression_, "..", $.expression_)),
 
-    infix_expression: $ => prec.left(PREC.INFIX, seq($.expression_, $.simple_identifier, $.expression_)),
+    infix_expression: ($) =>
+      prec.left(
+        PREC.INFIX,
+        seq($.expression_, $.simple_identifier, $.expression_)
+      ),
 
-    elvis_expression: $ => prec.left(PREC.ELVIS, seq($.expression_, "?:", $.expression_)),
+    elvis_expression: ($) =>
+      prec.left(PREC.ELVIS, seq($.expression_, "?:", $.expression_)),
 
-    check_expression: $ => prec.left(PREC.CHECK, seq($.expression_, choice(
-      seq($._in_operator, $.expression_), 
-      seq($._is_operator, $._type)))),
+    check_expression: ($) =>
+      prec.left(
+        PREC.CHECK,
+        seq(
+          $.expression_,
+          choice(
+            seq($._in_operator, $.expression_),
+            seq($._is_operator, $._type)
+          )
+        )
+      ),
 
-    comparison_expression: $ => prec.left(PREC.COMPARISON, seq($.expression_, $._comparison_operator, $.expression_)),
+    comparison_expression: ($) =>
+      prec.left(
+        PREC.COMPARISON,
+        seq($.expression_, $._comparison_operator, $.expression_)
+      ),
 
-    equality_expression: $ => prec.left(PREC.EQUALITY, seq($.expression_, $._equality_operator, $.expression_)),
+    equality_expression: ($) =>
+      prec.left(
+        PREC.EQUALITY,
+        seq($.expression_, $._equality_operator, $.expression_)
+      ),
 
-    conjunction_expression: $ => prec.left(PREC.CONJUNCTION, seq($.expression_, "&&", $.expression_)),
+    conjunction_expression: ($) =>
+      prec.left(PREC.CONJUNCTION, seq($.expression_, "&&", $.expression_)),
 
-    disjunction_expression: $ => prec.left(PREC.DISJUNCTION, seq($.expression_, "||", $.expression_)),
+    disjunction_expression: ($) =>
+      prec.left(PREC.DISJUNCTION, seq($.expression_, "||", $.expression_)),
 
     // Suffixes
 
-    indexing_suffix: $ => seq("[", sep1($.expression_, ","), "]"),
+    indexing_suffix: ($) => seq("[", sep1($.expression_, ","), "]"),
 
-    navigation_suffix: $ => seq(
-      $._member_access_operator,
-      choice(
-        $.simple_identifier,
-        $.parenthesized_expression,
-        "class"
-      )
-    ),
-
-    call_suffix: $ => prec.left(seq(
-      // this introduces ambiguities with 'less than' for comparisons
-      optional($.type_arguments),
-      choice(
-        seq(optional($.value_arguments), $.annotated_lambda),
-        $.value_arguments
-      )
-    )),
-
-    annotated_lambda: $ => seq(
-      repeat($.annotation),
-      optional($.label),
-      $.lambda_literal
-    ),
-
-    type_arguments: $ => seq("<", sep1($.type_projection, ","), ">"),
-
-    value_arguments: $ => seq("(", 
-      optional_with_placeholder("argument_list", sep1(alias($.value_argument, $.argument), ",")),
-      ")"
-    ),
-
-    value_argument: $ => seq(
-      optional($.annotation),
-      optional(seq(field('identifier', $.simple_identifier), "=")),
-      optional("*"),
-      $.expression_
-    ),
-
-    primary_expression_: $ => choice(
-      $.parenthesized_expression,
-      $.simple_identifier,
-      $._literal_constant,
-      $.string_literal,
-      $.callable_reference,
-      $._function_literal,
-      $.object_literal,
-      $.collection_literal,
-      $.this_expression,
-      $.super_expression,
-      $.if,
-      $.when_expression,
-      $.try,
-      $.jump_expression
-    ),
-
-    parenthesized_expression: $ => seq("(", $.expression_, ")"),
-
-    collection_literal: $ => seq("[", $.expression_, repeat(seq(",", $.expression_)), "]"),
-
-    _literal_constant: $ => choice(
-      $.boolean_literal,
-      $.integer_literal,
-      $.hex_literal,
-      $.bin_literal,
-      $.character_literal,
-      $.real_literal,
-      "null",
-      $.long_literal,
-      $.unsigned_literal
-    ),
-
-    string_literal: $ => choice(
-      $.line_string_literal,
-      $.multi_line_string_literal
-    ),
-
-    line_string_literal: $ => seq('"', repeat(choice($._line_string_content, $._interpolation)), '"'),
-
-    multi_line_string_literal: $ => seq(
-      '"""',
-      repeat(choice(
-        $._multi_line_string_content,
-        $._interpolation
-      )),
-      '"""'
-    ),
-
-    _line_string_content: $ => choice(
-      $._line_str_text,
-      $._line_str_escaped_char
-    ),
-
-    line_string_expression: $ => seq("${", $.expression_, "}"),
-
-    _multi_line_string_content: $ => choice($._multi_line_str_text, '"'),
-
-    _interpolation: $ => choice(
-      seq("${", alias($.expression_, $.interpolated_expression), "}"),
-      seq("$", alias($.simple_identifier, $.interpolated_identifier))
-    ),
-
-    lambda_literal: $ => prec(PREC.LAMBDA_LITERAL, seq(
-      "{",
-      optional(seq(optional($.lambda_parameters), "->")),
-      optional($.statements),
-      "}"
-    )),
-
-    multi_variable_declaration: $ => seq(
-      '(',
-      field('assignment_variable_list', sep1(alias($.single_variable_declaration, $.assignment_variable), ',')),
-      ')'
-    ),
-
-    lambda_parameters: $ => sep1($._lambda_parameter, ","),
-
-    _lambda_parameter: $ => choice(
-      $.single_variable_declaration, 
-      $.multi_variable_declaration
-    ),
-
-    anonymous_function: $ => seq(
-      "fun",
-      optional(seq(sep1($._simple_user_type, "."), ".")), // TODO
-      "(", ")",
-      optional($.function_body)
-    ),
-
-    _function_literal: $ => choice(
-      $.lambda_literal,
-      $.anonymous_function
-    ),
-
-    object_literal: $ => seq(
-      "object",
-      optional(seq(":", $.delegation_specifiers_)),
-      $.class_body
-    ),
-
-    this_expression: $ => "this",
-
-    super_expression: $ => seq(
-      "super",
-      // TODO optional(seq("<", $._type, ">")),
-      // TODO optional(seq("@", $.simple_identifier))
-    ),
-
-    if: $ => seq(
-      $.if_clause, 
-      optional_with_placeholder("else_if_clause_list", repeat($.else_if_clause)),
-      optional_with_placeholder("else_clause_optional", $.else_clause)
-    ),
-
-    if_clause: $ => seq(
-      "if", 
-      "(", 
-      field("condition", $.expression_), 
-      ")", 
-      choice(
-        $.control_structure_body,
-        ";",
-      )
-    ),
-
-    else_if_clause: $ => prec.dynamic(1, seq(
-      "else", 
-      "if", 
-      "(", 
-      field("condition", $.expression_), 
-      ")", 
-      choice(
-        $.control_structure_body,
-        ";",
-      )
-    )),
-
-    else_clause: $ => seq(
-      "else",
-      choice($.control_structure_body, ";")
-    ),
-
-    when_subject: $ => seq(
-      "(",
-      optional(seq(
-        repeat($.annotation),
-        "val",
-        $.single_variable_declaration,
-        "="
-      )),
-      $.expression_,
-      ")",
-    ),
-
-    when_expression: $ => seq(
-      "when",
-      optional($.when_subject),
-      "{",
-      repeat($.when_entry),
-      "}"
-    ),
-
-    when_entry: $ => seq(
-      choice(
-        seq($.when_condition, repeat(seq(",", $.when_condition))),
-        "else"
+    navigation_suffix: ($) =>
+      seq(
+        $._member_access_operator,
+        choice($.simple_identifier, $.parenthesized_expression, "class")
       ),
-      "->",
-      $.control_structure_body,
-      optional($._semi)
-    ),
 
-    when_condition: $ => choice(
-      $.expression_,
-      $.range_test,
-      $.type_test
-    ),
+    call_suffix: ($) =>
+      prec.left(
+        seq(
+          // this introduces ambiguities with 'less than' for comparisons
+          optional($.type_arguments),
+          choice(
+            seq(optional($.value_arguments), $.annotated_lambda),
+            $.value_arguments
+          )
+        )
+      ),
 
-    range_test: $ => seq($._in_operator, $.expression_),
+    annotated_lambda: ($) =>
+      seq(repeat($.annotation), optional($.label), $.lambda_literal),
 
-    type_test: $ => seq($._is_operator, $._type),
+    type_arguments: ($) => seq("<", sep1($.type_projection, ","), ">"),
 
-    try: $ => seq(
-      $.try_clause, 
-      optional_with_placeholder("catch_list", repeat1($.catch)),
-      optional_with_placeholder("finally_clause_optional", $.finally_clause)
-    ),
+    value_arguments: ($) =>
+      seq(
+        "(",
+        optional_with_placeholder(
+          "argument_list",
+          sep1(alias($.value_argument, $.argument), ",")
+        ),
+        ")"
+      ),
 
-    try_clause: $ => seq(
-      "try",
-      $.enclosed_body,
-    ),
+    value_argument: ($) =>
+      seq(
+        optional($.annotation),
+        optional(seq(field("identifier", $.simple_identifier), "=")),
+        optional("*"),
+        $.expression_
+      ),
 
-    catch: $ => seq(
-      "catch",
-      "(",
-      repeat($.annotation),
-      $.simple_identifier,
-      ":",
-      $._type,
-      ")",
-      $.enclosed_body,
-    ),
-
-    finally_clause: $ => seq("finally", $.enclosed_body),
-
-    jump_expression: $ => choice(
-      prec.right(PREC.RETURN_OR_THROW, $.throw),
-      prec.right(PREC.RETURN_OR_THROW, $.return),
-      "continue",
-      $._continue_at,
-      "break",
-      $._break_at
-    ),
-
-    throw: $ =>  seq("throw", $.expression_),
-    return: $ => seq(choice("return", $._return_at), 
-      optional_with_placeholder("return_value_optional", alias($.expression_, $.return_value))
-    ),
-
-    callable_reference: $ => seq(
-      optional(alias($.simple_identifier, $.type_identifier)), // TODO
-      "::",
-      choice($.simple_identifier, "class")
-    ),
-
-    _assignment_and_operator: $ => choice("+=", "-=", "*=", "/=", "%="),
-
-    _equality_operator: $ => choice("!=", "!==", "==", "==="),
-
-    _comparison_operator: $ => choice("<", ">", "<=", ">="),
-
-    _in_operator: $ => choice("in", "!in"),
-
-    _is_operator: $ => choice("is", $._not_is),
-
-    _additive_operator: $ => choice("+", "-"),
-
-    _multiplicative_operator: $ => choice("*", "/", "%"),
-
-    _as_operator: $ => choice("as", "as?"),
-
-    _prefix_unary_operator: $ => choice("++", "--", "-", "+", "!"),
-
-    _postfix_unary_operator: $ => choice("++", "--", "!!"),
-
-    _member_access_operator: $ => choice(".", $._safe_nav, "::"),
-
-    _safe_nav: $ => "?.",      // TODO: '?' and '.' should actually be separate tokens
-                               //       but produce an LR(1) conflict that way, however.
-                               //       ('as' expression with '?' produces conflict). Also
-                               //       does it seem to be very uncommon to write the safe
-                               //       navigation operator 'split up' in Kotlin.
-
-    _indexing_suffix: $ => seq(
-      '[',
-      $.expression_,
-      repeat(seq(',', $.expression_)),
-      optional(','),
-      ']'
-    ),
-
-    _postfix_unary_suffix: $ => choice(
-      $._postfix_unary_operator,
-      $.navigation_suffix,
-      $.indexing_suffix
-    ),
-
-    _postfix_unary_expression: $ => seq($.primary_expression_, repeat($._postfix_unary_suffix)),
-
-    directly_assignable_expression: $ => prec(
-      PREC.ASSIGNMENT,
-      field('assignment_variable',
+    primary_expression_: ($) =>
       choice(
-        $._postfix_unary_expression,
-        $.simple_identifier
-        // TODO
-      ))
-    ),
+        $.parenthesized_expression,
+        $.simple_identifier,
+        $._literal_constant,
+        $.string_literal,
+        $.callable_reference,
+        $._function_literal,
+        $.object_literal,
+        $.collection_literal,
+        $.this_expression,
+        $.super_expression,
+        $.if,
+        $.when_expression,
+        $.try,
+        $.jump_expression
+      ),
+
+    parenthesized_expression: ($) => seq("(", $.expression_, ")"),
+
+    collection_literal: ($) =>
+      seq("[", $.expression_, repeat(seq(",", $.expression_)), "]"),
+
+    _literal_constant: ($) =>
+      choice(
+        $.boolean_literal,
+        $.integer_literal,
+        $.hex_literal,
+        $.bin_literal,
+        $.character_literal,
+        $.real_literal,
+        "null",
+        $.long_literal,
+        $.unsigned_literal
+      ),
+
+    string_literal: ($) =>
+      choice($.line_string_literal, $.multi_line_string_literal),
+
+    line_string_literal: ($) =>
+      seq('"', repeat(choice($.line_string_content_, $.interpolation_)), '"'),
+
+    multi_line_string_literal: ($) =>
+      seq(
+        '"""',
+        repeat(choice($._multi_line_string_content, $.interpolation_)),
+        '"""'
+      ),
+
+    line_string_content_: ($) =>
+      choice($._line_str_text, $._line_str_escaped_char),
+
+    line_string_expression: ($) => seq("${", $.expression_, "}"),
+
+    _multi_line_string_content: ($) => choice($._multi_line_str_text, '"'),
+
+    interpolation_: ($) =>
+      choice(
+        seq("${", alias($.expression_, $.interpolated_expression), "}"),
+        seq("$", alias($.simple_identifier, $.interpolated_identifier))
+      ),
+
+    lambda_literal: ($) =>
+      prec(
+        PREC.LAMBDA_LITERAL,
+        seq(
+          "{",
+          optional(seq(optional($.lambda_parameters), "->")),
+          optional($.statements),
+          "}"
+        )
+      ),
+
+    multi_variable_declaration: ($) =>
+      seq(
+        "(",
+        field(
+          "assignment_variable_list",
+          sep1(alias($.single_variable_declaration, $.assignment_variable), ",")
+        ),
+        ")"
+      ),
+
+    lambda_parameters: ($) => sep1($._lambda_parameter, ","),
+
+    _lambda_parameter: ($) =>
+      choice($.single_variable_declaration, $.multi_variable_declaration),
+
+    anonymous_function: ($) =>
+      seq(
+        "fun",
+        optional(seq(sep1($._simple_user_type, "."), ".")), // TODO
+        "(",
+        ")",
+        optional($.function_body)
+      ),
+
+    _function_literal: ($) => choice($.lambda_literal, $.anonymous_function),
+
+    object_literal: ($) =>
+      seq("object", optional(seq(":", $.delegation_specifiers_)), $.class_body),
+
+    this_expression: ($) => "this",
+
+    super_expression: ($) =>
+      seq(
+        "super"
+        // TODO optional(seq("<", $._type, ">")),
+        // TODO optional(seq("@", $.simple_identifier))
+      ),
+
+    if: ($) =>
+      seq(
+        $.if_clause,
+        optional_with_placeholder(
+          "else_if_clause_list",
+          repeat($.else_if_clause)
+        ),
+        optional_with_placeholder("else_clause_optional", $.else_clause)
+      ),
+
+    if_clause: ($) =>
+      seq(
+        "if",
+        "(",
+        field("condition", $.expression_),
+        ")",
+        choice($.control_structure_body, ";")
+      ),
+
+    else_if_clause: ($) =>
+      prec.dynamic(
+        1,
+        seq(
+          "else",
+          "if",
+          "(",
+          field("condition", $.expression_),
+          ")",
+          choice($.control_structure_body, ";")
+        )
+      ),
+
+    else_clause: ($) => seq("else", choice($.control_structure_body, ";")),
+
+    when_subject: ($) =>
+      seq(
+        "(",
+        optional(
+          seq(repeat($.annotation), "val", $.single_variable_declaration, "=")
+        ),
+        $.expression_,
+        ")"
+      ),
+
+    when_expression: ($) =>
+      seq("when", optional($.when_subject), "{", repeat($.when_entry), "}"),
+
+    when_entry: ($) =>
+      seq(
+        choice(
+          seq($.when_condition, repeat(seq(",", $.when_condition))),
+          "else"
+        ),
+        "->",
+        $.control_structure_body,
+        optional($._semi)
+      ),
+
+    when_condition: ($) => choice($.expression_, $.range_test, $.type_test),
+
+    range_test: ($) => seq($._in_operator, $.expression_),
+
+    type_test: ($) => seq($._is_operator, $._type),
+
+    try: ($) =>
+      seq(
+        $.try_clause,
+        optional_with_placeholder("catch_list", repeat1($.catch)),
+        optional_with_placeholder("finally_clause_optional", $.finally_clause)
+      ),
+
+    try_clause: ($) => seq("try", $.enclosed_body),
+
+    catch: ($) =>
+      seq(
+        "catch",
+        "(",
+        repeat($.annotation),
+        $.simple_identifier,
+        ":",
+        $._type,
+        ")",
+        $.enclosed_body
+      ),
+
+    finally_clause: ($) => seq("finally", $.enclosed_body),
+
+    jump_expression: ($) =>
+      choice(
+        prec.right(PREC.RETURN_OR_THROW, $.throw),
+        prec.right(PREC.RETURN_OR_THROW, $.return),
+        "continue",
+        $._continue_at,
+        "break",
+        $._break_at
+      ),
+
+    throw: ($) => seq("throw", $.expression_),
+    return: ($) =>
+      seq(
+        choice("return", $._return_at),
+        optional_with_placeholder(
+          "return_value_optional",
+          alias($.expression_, $.return_value)
+        )
+      ),
+
+    callable_reference: ($) =>
+      seq(
+        optional(alias($.simple_identifier, $.type_identifier)), // TODO
+        "::",
+        choice($.simple_identifier, "class")
+      ),
+
+    _assignment_and_operator: ($) => choice("+=", "-=", "*=", "/=", "%="),
+
+    _equality_operator: ($) => choice("!=", "!==", "==", "==="),
+
+    _comparison_operator: ($) => choice("<", ">", "<=", ">="),
+
+    _in_operator: ($) => choice("in", "!in"),
+
+    _is_operator: ($) => choice("is", $._not_is),
+
+    _additive_operator: ($) => choice("+", "-"),
+
+    _multiplicative_operator: ($) => choice("*", "/", "%"),
+
+    _as_operator: ($) => choice("as", "as?"),
+
+    _prefix_unary_operator: ($) => choice("++", "--", "-", "+", "!"),
+
+    _postfix_unary_operator: ($) => choice("++", "--", "!!"),
+
+    _member_access_operator: ($) => choice(".", $._safe_nav, "::"),
+
+    _safe_nav: ($) => "?.", // TODO: '?' and '.' should actually be separate tokens
+    //       but produce an LR(1) conflict that way, however.
+    //       ('as' expression with '?' produces conflict). Also
+    //       does it seem to be very uncommon to write the safe
+    //       navigation operator 'split up' in Kotlin.
+
+    _indexing_suffix: ($) =>
+      seq(
+        "[",
+        $.expression_,
+        repeat(seq(",", $.expression_)),
+        optional(","),
+        "]"
+      ),
+
+    postfix_unary_suffix_: ($) =>
+      choice($._postfix_unary_operator, $.navigation_suffix, $.indexing_suffix),
+
+    _postfix_unary_expression: ($) =>
+      seq($.primary_expression_, repeat($.postfix_unary_suffix_)),
+
+    directly_assignable_expression: ($) =>
+      prec(
+        PREC.ASSIGNMENT,
+        field(
+          "assignment_variable",
+          choice(
+            $._postfix_unary_expression,
+            $.simple_identifier
+            // TODO
+          )
+        )
+      ),
 
     // ==========
     // Modifiers
     // ==========
 
-    modifiers: $ => prec.left(repeat1(choice($.annotation, $._modifier))),
+    modifiers: ($) => prec.left(repeat1(choice($.annotation, $._modifier))),
 
-    parameter_modifiers: $ => repeat1(choice($.annotation, $.parameter_modifier)),
+    parameter_modifiers: ($) =>
+      repeat1(choice($.annotation, $.parameter_modifier)),
 
-    _modifier: $ => choice(
-      $.class_modifier,
-      $.member_modifier,
-      $.visibility_modifier,
-      $.function_modifier,
-      $.property_modifier,
-      $.inheritance_modifier,
-      $.parameter_modifier,
-      $.platform_modifier
-    ),
+    _modifier: ($) =>
+      choice(
+        $.class_modifier,
+        $.member_modifier,
+        $.visibility_modifier,
+        $.function_modifier,
+        $.property_modifier,
+        $.inheritance_modifier,
+        $.parameter_modifier,
+        $.platform_modifier
+      ),
 
-    type_modifiers: $ => repeat1($._type_modifier),
+    type_modifiers: ($) => repeat1($._type_modifier),
 
-    _type_modifier: $ => choice($.annotation, "suspend"),
+    _type_modifier: ($) => choice($.annotation, "suspend"),
 
-    class_modifier: $ => choice(
-      "sealed",
-      "annotation",
-      "data",
-      "inner"
-    ),
+    class_modifier: ($) => choice("sealed", "annotation", "data", "inner"),
 
-    member_modifier: $ => choice(
-      "override",
-      "lateinit"
-    ),
+    member_modifier: ($) => choice("override", "lateinit"),
 
-    visibility_modifier: $ => choice(
-      "public",
-      "private",
-      "internal",
-      "protected"
-    ),
+    visibility_modifier: ($) =>
+      choice("public", "private", "internal", "protected"),
 
-    variance_modifier: $ => choice(
-      "in",
-      "out"
-    ),
+    variance_modifier: ($) => choice("in", "out"),
 
-    type_parameter_modifiers: $ => repeat1($._type_parameter_modifier),
+    type_parameter_modifiers: ($) => repeat1($._type_parameter_modifier),
 
-    _type_parameter_modifier: $ => choice(
-      $.reification_modifier,
-      $.variance_modifier,
-      $.annotation
-    ),
+    _type_parameter_modifier: ($) =>
+      choice($.reification_modifier, $.variance_modifier, $.annotation),
 
-    function_modifier: $ => choice(
-      "tailrec",
-      "operator",
-      "infix",
-      "inline",
-      "external",
-      "suspend"
-    ),
+    function_modifier: ($) =>
+      choice("tailrec", "operator", "infix", "inline", "external", "suspend"),
 
-    property_modifier: $ => "const",
+    property_modifier: ($) => "const",
 
-    inheritance_modifier: $ => choice(
-      "abstract",
-      "final",
-      "open"
-    ),
+    inheritance_modifier: ($) => choice("abstract", "final", "open"),
 
-    parameter_modifier: $ => choice(
-      "vararg",
-      "noinline",
-      "crossinline"
-    ),
+    parameter_modifier: ($) => choice("vararg", "noinline", "crossinline"),
 
-    reification_modifier: $ => "reified",
+    reification_modifier: ($) => "reified",
 
-    platform_modifier: $ => choice(
-      "expect",
-      "actual"
-    ),
+    platform_modifier: ($) => choice("expect", "actual"),
 
     // ==========
     // Annotations
     // ==========
 
-    annotation: $ => choice(
-      $._single_annotation,
-      $._multi_annotation
-    ),
+    annotation: ($) => choice($._single_annotation, $._multi_annotation),
 
-    _single_annotation: $ => seq(
-      "@",
-      optional($.use_site_target),
-      $._unescaped_annotation
-    ),
+    _single_annotation: ($) =>
+      seq("@", optional($.use_site_target), $._unescaped_annotation),
 
-    _multi_annotation: $ => seq(
-      "@",
-      optional($.use_site_target),
-      "[",
-      repeat1($._unescaped_annotation),
-      "]"
-    ),
+    _multi_annotation: ($) =>
+      seq(
+        "@",
+        optional($.use_site_target),
+        "[",
+        repeat1($._unescaped_annotation),
+        "]"
+      ),
 
-    use_site_target: $ => seq(
-      choice("field", "property", "get", "set", "receiver", "param", "setparam", "delegate"),
-      ":"
-    ),
+    use_site_target: ($) =>
+      seq(
+        choice(
+          "field",
+          "property",
+          "get",
+          "set",
+          "receiver",
+          "param",
+          "setparam",
+          "delegate"
+        ),
+        ":"
+      ),
 
-    _unescaped_annotation: $ => choice(
-      $.constructor_invocation,
-      $.user_type
-    ),
+    _unescaped_annotation: ($) => choice($.constructor_invocation, $.user_type),
 
     // ==========
     // Identifiers
     // ==========
 
-    simple_identifier: $ => choice(
-      $._lexical_identifier,
-      "expect",
-      "data",
-      "inner",
-      "actual",
-      "set",
-      "get"
-      // TODO: More soft keywords
-    ),
+    simple_identifier: ($) =>
+      choice(
+        $.lexical_identifier_,
+        "expect",
+        "data",
+        "inner",
+        "actual",
+        "set",
+        "get"
+        // TODO: More soft keywords
+      ),
 
-    identifier: $ => sep1($.simple_identifier, "."),
+    identifier: ($) => sep1($.simple_identifier, "."),
 
     // ====================
     // Lexical grammar
     // ====================
-
 
     // ==========
     // General
     // ==========
 
     // Source: https://github.com/tree-sitter/tree-sitter-java/blob/bc7124d924723e933b6ffeb5f22c4cf5248416b7/grammar.js#L1030
-    comment: $ => token(prec(PREC.COMMENT, choice(
-      seq("//", /.*/),
-      seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/")
-    ))),
+    comment: ($) =>
+      token(
+        prec(
+          PREC.COMMENT,
+          choice(seq("//", /.*/), seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"))
+        )
+      ),
 
     // ==========
     // Separators and operations
     // ==========
 
-
     // ==========
     // Keywords
     // ==========
 
-    _return_at: $ => seq("return@", $._lexical_identifier),
+    _return_at: ($) => seq("return@", $.lexical_identifier_),
 
-    _continue_at: $ => seq("continue@", $._lexical_identifier),
+    _continue_at: ($) => seq("continue@", $.lexical_identifier_),
 
-    _break_at: $ => seq("break@", $._lexical_identifier),
+    _break_at: ($) => seq("break@", $.lexical_identifier_),
 
-    _this_at: $ => seq("this@", $._lexical_identifier),
+    _this_at: ($) => seq("this@", $.lexical_identifier_),
 
-    _super_at: $ => seq("super@", $._lexical_identifier),
+    _super_at: ($) => seq("super@", $.lexical_identifier_),
 
-    _not_is: $ => "!is",
+    _not_is: ($) => "!is",
 
-    _not_in: $ => "!in",
+    _not_in: ($) => "!in",
 
     // ==========
     // Literals
     // ==========
 
-    real_literal: $ => token(choice(
-      seq(
+    real_literal: ($) =>
+      token(
         choice(
-          seq(DEC_DIGITS, REAL_EXPONENT),
-          seq(optional(DEC_DIGITS), ".", DEC_DIGITS, optional(REAL_EXPONENT))
-        ),
-        optional(/[fF]/)
+          seq(
+            choice(
+              seq(DEC_DIGITS, REAL_EXPONENT),
+              seq(
+                optional(DEC_DIGITS),
+                ".",
+                DEC_DIGITS,
+                optional(REAL_EXPONENT)
+              )
+            ),
+            optional(/[fF]/)
+          ),
+          seq(DEC_DIGITS, /[fF]/)
+        )
       ),
-      seq(DEC_DIGITS, /[fF]/)
-    )),
 
-    integer_literal: $ => token(seq(optional(/[1-9]/), DEC_DIGITS)),
+    integer_literal: ($) => token(seq(optional(/[1-9]/), DEC_DIGITS)),
 
-    hex_literal: $ => token(seq("0", /[xX]/, HEX_DIGITS)),
+    hex_literal: ($) => token(seq("0", /[xX]/, HEX_DIGITS)),
 
-    bin_literal: $ => token(seq("0", /[bB]/, BIN_DIGITS)),
+    bin_literal: ($) => token(seq("0", /[bB]/, BIN_DIGITS)),
 
-    unsigned_literal: $ => seq(
-      choice($.integer_literal, $.hex_literal, $.bin_literal),
-      /[uU]/,
-      optional("L")
-    ),
+    unsigned_literal: ($) =>
+      seq(
+        choice($.integer_literal, $.hex_literal, $.bin_literal),
+        /[uU]/,
+        optional("L")
+      ),
 
-    long_literal: $ => seq(
-      choice($.integer_literal, $.hex_literal, $.bin_literal),
-      "L"
-    ),
+    long_literal: ($) =>
+      seq(choice($.integer_literal, $.hex_literal, $.bin_literal), "L"),
 
-    boolean_literal: $ => choice("true", "false"),
+    boolean_literal: ($) => choice("true", "false"),
 
-    character_literal: $ => seq(
-      "'",
-      choice($._escape_seq, /[^\n\r'\\]/),
-      "'"
-    ),
-
+    character_literal: ($) =>
+      seq("'", choice($.escape_seq_, /[^\n\r'\\]/), "'"),
 
     // ==========
     // Identifiers
     // ==========
 
-    _lexical_identifier: $ => choice(
-      $._alpha_identifier,
-      $._backtick_identifier,
-    ),
+    lexical_identifier_: ($) =>
+      choice($._alpha_identifier, $._backtick_identifier),
 
-    _alpha_identifier: $ => /[a-zA-Z_][a-zA-Z_0-9]*/,
+    _alpha_identifier: ($) => /[a-zA-Z_][a-zA-Z_0-9]*/,
 
-    _backtick_identifier: $ => /`[^\r\n`]+`/,
+    _backtick_identifier: ($) => /`[^\r\n`]+`/,
 
-    _uni_character_literal: $ => seq(
-      "\\u",
-      /[0-9a-fA-F]{4}/
-    ),
+    _uni_character_literal: ($) => seq("\\u", /[0-9a-fA-F]{4}/),
 
-    _escaped_identifier: $ => /\\[tbrn'"\\$]/,
+    _escaped_identifier: ($) => /\\[tbrn'"\\$]/,
 
-    _escape_seq: $ => choice(
-      $._uni_character_literal,
-      $._escaped_identifier
-    ),
+    escape_seq_: ($) => choice($._uni_character_literal, $._escaped_identifier),
 
     // ==========
     // Strings
     // ==========
 
-    _line_str_text: $ => /[^\\"$]+/,
+    _line_str_text: ($) => /[^\\"$]+/,
 
-    _line_str_escaped_char: $ => choice(
-      $._escaped_identifier,
-      $._uni_character_literal
-    ),
+    _line_str_escaped_char: ($) =>
+      choice($._escaped_identifier, $._uni_character_literal),
 
-    _multi_line_str_text: $ => /[^"$]+/
-  }
+    _multi_line_str_text: ($) => /[^"$]+/,
+  },
 });
 
 function sep1(rule, separator) {

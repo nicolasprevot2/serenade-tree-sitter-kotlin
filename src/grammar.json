@@ -1308,7 +1308,7 @@
         }
       ]
     },
-    "_receiver_type": {
+    "receiver_type_": {
       "type": "SEQ",
       "members": [
         {
@@ -1328,7 +1328,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_type_reference"
+              "name": "type_reference_"
             },
             {
               "type": "SYMBOL",
@@ -1384,7 +1384,7 @@
                 "members": [
                   {
                     "type": "SYMBOL",
-                    "name": "_receiver_type"
+                    "name": "receiver_type_"
                   },
                   {
                     "type": "CHOICE",
@@ -1693,7 +1693,7 @@
                 "members": [
                   {
                     "type": "SYMBOL",
-                    "name": "_receiver_type"
+                    "name": "receiver_type_"
                   },
                   {
                     "type": "CHOICE",
@@ -2373,7 +2373,7 @@
             },
             {
               "type": "SYMBOL",
-              "name": "_type_reference"
+              "name": "type_reference_"
             },
             {
               "type": "SYMBOL",
@@ -2383,7 +2383,7 @@
         }
       ]
     },
-    "_type_reference": {
+    "type_reference_": {
       "type": "CHOICE",
       "members": [
         {
@@ -2404,7 +2404,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_type_reference"
+              "name": "type_reference_"
             },
             {
               "type": "SYMBOL",
@@ -4043,11 +4043,11 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "_line_string_content"
+                "name": "line_string_content_"
               },
               {
                 "type": "SYMBOL",
-                "name": "_interpolation"
+                "name": "interpolation_"
               }
             ]
           }
@@ -4076,7 +4076,7 @@
               },
               {
                 "type": "SYMBOL",
-                "name": "_interpolation"
+                "name": "interpolation_"
               }
             ]
           }
@@ -4087,7 +4087,7 @@
         }
       ]
     },
-    "_line_string_content": {
+    "line_string_content_": {
       "type": "CHOICE",
       "members": [
         {
@@ -4130,7 +4130,7 @@
         }
       ]
     },
-    "_interpolation": {
+    "interpolation_": {
       "type": "CHOICE",
       "members": [
         {
@@ -5293,7 +5293,7 @@
         }
       ]
     },
-    "_postfix_unary_suffix": {
+    "postfix_unary_suffix_": {
       "type": "CHOICE",
       "members": [
         {
@@ -5321,7 +5321,7 @@
           "type": "REPEAT",
           "content": {
             "type": "SYMBOL",
-            "name": "_postfix_unary_suffix"
+            "name": "postfix_unary_suffix_"
           }
         }
       ]
@@ -5754,7 +5754,7 @@
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_lexical_identifier"
+          "name": "lexical_identifier_"
         },
         {
           "type": "STRING",
@@ -5858,7 +5858,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_lexical_identifier"
+          "name": "lexical_identifier_"
         }
       ]
     },
@@ -5871,7 +5871,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_lexical_identifier"
+          "name": "lexical_identifier_"
         }
       ]
     },
@@ -5884,7 +5884,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_lexical_identifier"
+          "name": "lexical_identifier_"
         }
       ]
     },
@@ -5897,7 +5897,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_lexical_identifier"
+          "name": "lexical_identifier_"
         }
       ]
     },
@@ -5910,7 +5910,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_lexical_identifier"
+          "name": "lexical_identifier_"
         }
       ]
     },
@@ -6432,7 +6432,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_escape_seq"
+              "name": "escape_seq_"
             },
             {
               "type": "PATTERN",
@@ -6446,7 +6446,7 @@
         }
       ]
     },
-    "_lexical_identifier": {
+    "lexical_identifier_": {
       "type": "CHOICE",
       "members": [
         {
@@ -6484,7 +6484,7 @@
       "type": "PATTERN",
       "value": "\\\\[tbrn'\"\\\\$]"
     },
-    "_escape_seq": {
+    "escape_seq_": {
       "type": "CHOICE",
       "members": [
         {
