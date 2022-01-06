@@ -4,6 +4,7 @@
   "description": "Tree-Sitter grammar for Kotlin",
   "main": "bindings/node",
   "scripts": {
+    "build": "tree-sitter generate",
     "test": "tree-sitter test",
     "install": "node-gyp rebuild",
     "generate": "tree-sitter generate",
@@ -32,5 +33,12 @@
   },
   "devDependencies": {
     "tree-sitter-cli": "^0.20.0"
+  }, 
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "arrowParens": "avoid",
+    "singleQuote": true
   }
 }
